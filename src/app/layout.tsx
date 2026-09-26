@@ -10,17 +10,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fa" dir="rtl">
       <body>
-        <header className="site-header">
-          <a href="/" className="brand-mark">
-            <span>BeautyOS</span>
-            <small>Beauty Passport</small>
-          </a>
-          <nav className="site-nav" aria-label="ناوبری اصلی">
-            <a href="/passport">پروفایل زیبایی</a>
-            <a href="/recommendations">پیشنهادها</a>
-            <a href="/needs">نیازها</a>
-          </nav>
-        </header>
+        <div className="site-header-wrap">
+          <header className="site-header">
+            <a href="/" className="brand-mark" aria-label="BeautyOS - صفحه اصلی">
+              <span className="brand-symbol">B</span>
+              <span className="brand-copy">
+                <strong>BeautyOS</strong>
+                <small>انتخاب زیبایی، براساس خودت</small>
+              </span>
+            </a>
+            <nav className="site-nav" aria-label="ناوبری اصلی">
+              <a href="/needs">نیازها</a>
+              <a href="/recommendations">پیشنهادهای من</a>
+              <a href="/passport" className="nav-cta">ساخت پروفایل</a>
+            </nav>
+          </header>
+        </div>
         {children}
       </body>
     </html>
