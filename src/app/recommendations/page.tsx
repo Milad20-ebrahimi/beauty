@@ -39,6 +39,7 @@ export default async function RecommendationsPage() {
     include: {
       brand: true,
       category: true,
+      media: { take: 1, orderBy: { sortOrder: "asc" } },
       concerns: { include: { concern: true } },
       skinSuitability: true,
       reviews: {
@@ -118,13 +119,13 @@ export default async function RecommendationsPage() {
         ) : (
           scoredProducts.map(({ product, score, similarReviews }) => (
             <article key={product.id} className="product-card">
-              <div className="product-visual">
-                <div className="bottle-shape">{product.brand.name}</div>
+              <a href={`/products/${product.slug}`} className="product-visual" aria-label={`مشاهده ${product.title}`}>
+                {product.media[0] ? <img src={product.media[0].url} alt={product.media[0].alt || product.title} className="catalog-product-image" /> : <div className="bottle-shape">{product.brand.name}</div>}
                 <div className="score-badge"><strong>{score.score}%</strong><span>تطابق</span></div>
-              </div>
+              </a>
               <div className="product-main">
                 <p className="eyebrow">{product.brand.name} / {product.category.title}</p>
-                <h2>{product.title}</h2>
+                <h2><a href={`/products/${product.slug}`}>{product.title}</a></h2>
                 {product.subtitle ? <p className="muted">{product.subtitle}</p> : null}
                 <p className="product-description">{product.description}</p>
                 <div className="product-tags"><span>{product.fragranceFree ? "بدون عطر" : "دارای رایحه"}</span><span>{budgetLabels[product.budgetTier]}</span></div>
@@ -151,7 +152,7 @@ export default async function RecommendationsPage() {
 
               <div className="card-footer">
                 <span className="price"><strong>{formatPrice(product.price)} تومان</strong><small>قیمت ثبت‌شده</small></span>
-                <span className="review-count">{similarReviews.length} تجربه از پوست مشابه</span>
+                <a href={`/products/${product.slug}`} className="inline-link">مشاهده جزئیات ←</a>
               </div>
             </article>
           ))

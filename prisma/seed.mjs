@@ -30,6 +30,15 @@ const brands = [
   ["luma-care", "Luma Care", "France"]
 ];
 
+const ingredients = [
+  ["niacinamide", "نیاسینامید", "به کنترل چربی و تقویت ظاهر سد دفاعی پوست کمک می‌کند."],
+  ["zinc-oxide", "زینک اکساید", "فیلتر معدنی محافظت‌کننده در برابر پرتوهای خورشید."],
+  ["panthenol", "پانتنول", "ترکیب آرام‌بخش و رطوبت‌رسان برای پوست حساس."],
+  ["glycerin", "گلیسیرین", "رطوبت را در پوست نگه می‌دارد و از خشکی جلوگیری می‌کند."],
+  ["ceramide", "سرامید", "به بازسازی و حفظ سد دفاعی پوست کمک می‌کند."],
+  ["squalane", "اسکوالان", "نرم‌کننده سبک برای کاهش خشکی و زبری پوست."]
+];
+
 const products = [
   {
     slug: "derma-safe-oil-control-sunscreen",
@@ -44,6 +53,8 @@ const products = [
     fragranceFree: true,
     alcoholFree: true,
     suitableForSensitive: true,
+    imageUrl: "/products/derma-safe-sunscreen.webp",
+    ingredients: ["zinc-oxide", "niacinamide", "panthenol"],
     concerns: ["acne", "sun-protection"],
     skinScores: {
       [SkinType.OILY]: 18,
@@ -70,6 +81,8 @@ const products = [
     fragranceFree: true,
     alcoholFree: true,
     suitableForSensitive: true,
+    imageUrl: "/products/pure-lab-cleanser.webp",
+    ingredients: ["glycerin", "panthenol"],
     concerns: ["dryness", "sensitivity", "basic-routine"],
     skinScores: {
       [SkinType.DRY]: 16,
@@ -96,6 +109,8 @@ const products = [
     fragranceFree: true,
     alcoholFree: true,
     suitableForSensitive: true,
+    imageUrl: "/products/luma-care-moisturizer.webp",
+    ingredients: ["ceramide", "squalane", "glycerin"],
     concerns: ["dryness", "sensitivity", "basic-routine"],
     skinScores: {
       [SkinType.DRY]: 20,
@@ -142,6 +157,16 @@ async function main() {
     brandBySlug.set(slug, brand);
   }
 
+  const ingredientBySlug = new Map();
+  for (const [slug, name, description] of ingredients) {
+    const ingredient = await prisma.ingredient.upsert({
+      where: { slug },
+      update: { name, description },
+      create: { slug, name, description }
+    });
+    ingredientBySlug.set(slug, ingredient);
+  }
+
   for (const item of products) {
     const product = await prisma.product.upsert({
       where: { slug: item.slug },
@@ -180,7 +205,26 @@ async function main() {
 
     await prisma.productConcern.deleteMany({ where: { productId: product.id } });
     await prisma.productSkinSuitability.deleteMany({ where: { productId: product.id } });
+    await prisma.productMedia.deleteMany({ where: { productId: product.id } });
+    await prisma.productIngredient.deleteMany({ where: { productId: product.id } });
     await prisma.review.deleteMany({ where: { productId: product.id, source: ReviewSource.IMPORTED } });
+
+    await prisma.productMedia.create({
+      data: {
+        productId: product.id,
+        url: item.imageUrl,
+        alt: `تصویر ${item.title}`,
+        sortOrder: 0
+      }
+    });
+
+    await prisma.productIngredient.createMany({
+      data: item.ingredients.map((slug, position) => ({
+        productId: product.id,
+        ingredientId: ingredientBySlug.get(slug).id,
+        position: position + 1
+      }))
+    });
 
     await prisma.productConcern.createMany({
       data: item.concerns.map((slug) => ({
@@ -235,4 +279,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
