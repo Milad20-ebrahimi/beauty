@@ -1,4 +1,8 @@
-export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+import { requireAdmin } from "@/lib/auth";
+import { logoutAdmin } from "./logout-action";
+
+export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const user = await requireAdmin();
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -14,6 +18,11 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
           <span>نظرات <small>به‌زودی</small></span>
           <span>کاربران <small>به‌زودی</small></span>
         </nav>
+        <div className="admin-sidebar-user">
+          <span>{user.displayName?.charAt(0) || "م"}</span>
+          <div><strong>{user.displayName || "مدیر"}</strong><small>{user.role === "MANAGER" ? "مدیر کل" : "ادمین"}</small></div>
+          <form action={logoutAdmin}><button type="submit" title="خروج از حساب">خروج</button></form>
+        </div>
         <a href="/" className="admin-store-link">مشاهده فروشگاه ←</a>
       </aside>
       <div className="admin-content">{children}</div>

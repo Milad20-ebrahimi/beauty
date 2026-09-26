@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.mjs",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "auth:setup": "node scripts/setup-admin.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
