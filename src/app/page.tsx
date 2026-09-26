@@ -19,6 +19,7 @@ export default function HomePage() {
         <div className="hero-actions">
           <a href="/passport" className="primary-action">Beauty Profile من را بساز</a>
           <a href="/needs" className="secondary-action">از روی نیاز خرید کنم</a>
+          <a href="/recommendations" className="secondary-action">دموی پیشنهاد محصول</a>
         </div>
       </section>
 
@@ -35,4 +36,3 @@ export default function HomePage() {
     </main>
   );
 }
-
