@@ -2,12 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { saveBeautyPassport } from "./actions";
 
 const skinTypes = [
-  ["OILY", "چرب"],
-  ["DRY", "خشک"],
-  ["COMBINATION", "مختلط"],
-  ["NORMAL", "نرمال"],
-  ["SENSITIVE", "حساس"],
-  ["UNKNOWN", "مطمئن نیستم"]
+  ["OILY", "چرب", "برق می‌افتد، منافذ و جوش بیشتر دیده می‌شود."],
+  ["DRY", "خشک", "کشیدگی، پوسته‌پوسته شدن یا کم‌آبی حس می‌کنی."],
+  ["COMBINATION", "مختلط", "بعضی قسمت‌ها چرب و بعضی قسمت‌ها خشک است."],
+  ["NORMAL", "نرمال", "مشکل مشخصی نداری و تعادل پوست خوب است."],
+  ["SENSITIVE", "حساس", "زود قرمز، ملتهب یا تحریک می‌شود."],
+  ["UNKNOWN", "مطمئن نیستم", "فعلاً مطمئن نیستی و می‌خواهی با احتیاط شروع کنی."]
 ];
 
 const hairTypes = [
@@ -19,9 +19,9 @@ const hairTypes = [
 ];
 
 const budgetTiers = [
-  ["ECONOMY", "اقتصادی"],
-  ["BALANCED", "متعادل"],
-  ["PREMIUM", "Premium"]
+  ["ECONOMY", "اقتصادی", "انتخاب کم‌ریسک با هزینه کمتر."],
+  ["BALANCED", "متعادل", "تعادل بین قیمت، کیفیت و تجربه کاربران."],
+  ["PREMIUM", "Premium", "گزینه‌های کامل‌تر با قیمت بالاتر."]
 ];
 
 export const dynamic = "force-dynamic";
@@ -33,29 +33,50 @@ export default async function PassportPage() {
 
   return (
     <main className="home-shell">
-      <section className="hero compact-hero">
-        <p className="eyebrow">Beauty Passport</p>
-        <h1>اول خودت را بشناس، بعد خرید کن.</h1>
-        <p className="hero-copy">
-          این پرسش‌ها تشخیص پزشکی نیستند؛ فقط کمک می‌کنند پیشنهاد محصول شفاف‌تر و کم‌ریسک‌تر شود.
-        </p>
+      <section className="compact-hero passport-hero">
+        <div className="hero-content">
+          <p className="eyebrow">حدود ۲ دقیقه</p>
+          <h1>پاسپورت زیبایی‌ات را بساز</h1>
+          <p className="hero-copy">چند سؤال کوتاه برای اینکه محصول نامناسب از پیشنهادها حذف شود.</p>
+        </div>
+        <div className="trust-strip">
+          <span>بدون تشخیص پزشکی</span>
+          <span>قابل تغییر</span>
+          <span>مبنای Match Score</span>
+        </div>
       </section>
 
       <form action={saveBeautyPassport} className="passport-form">
+        <div className="form-sections">
         <section className="form-section">
-          <h2>نوع پوست</h2>
+          <div className="section-heading">
+            <span>۱</span>
+            <div>
+              <h2>نوع پوست</h2>
+              <p>اگر مطمئن نیستی گزینه آخر را بزن؛ سیستم با احتیاط پیشنهاد می‌دهد.</p>
+            </div>
+          </div>
           <div className="option-grid">
-            {skinTypes.map(([value, label]) => (
+            {skinTypes.map(([value, label, description]) => (
               <label key={value} className="choice-card">
                 <input type="radio" name="skinType" value={value} defaultChecked={value === "UNKNOWN"} />
-                <span>{label}</span>
+                <span>
+                  <strong>{label}</strong>
+                  <small>{description}</small>
+                </span>
               </label>
             ))}
           </div>
         </section>
 
         <section className="form-section">
-          <h2>دغدغه اصلی</h2>
+          <div className="section-heading">
+            <span>۲</span>
+            <div>
+              <h2>دغدغه اصلی</h2>
+              <p>یک یا چند مورد را انتخاب کن تا پیشنهادها از روی نیاز ساخته شوند.</p>
+            </div>
+          </div>
           {concerns.length === 0 ? (
             <p className="muted">اول دستور <code>npm run db:seed</code> را اجرا کن تا گزینه‌های دغدغه ساخته شوند.</p>
           ) : (
@@ -71,19 +92,34 @@ export default async function PassportPage() {
         </section>
 
         <section className="form-section">
-          <h2>بودجه خرید</h2>
+          <div className="section-heading">
+            <span>۳</span>
+            <div>
+              <h2>بودجه خرید</h2>
+              <p>بودجه باعث می‌شود محصول خوب اما نامتناسب با توان خرید پیشنهاد نشود.</p>
+            </div>
+          </div>
           <div className="option-grid">
-            {budgetTiers.map(([value, label]) => (
+            {budgetTiers.map(([value, label, description]) => (
               <label key={value} className="choice-card">
                 <input type="radio" name="budgetTier" value={value} defaultChecked={value === "BALANCED"} />
-                <span>{label}</span>
+                <span>
+                  <strong>{label}</strong>
+                  <small>{description}</small>
+                </span>
               </label>
             ))}
           </div>
         </section>
 
         <section className="form-section">
-          <h2>مو و حساسیت‌ها</h2>
+          <div className="section-heading">
+            <span>۴</span>
+            <div>
+              <h2>مو و حساسیت‌ها</h2>
+              <p>این بخش فعلاً ساده است؛ بعداً برای روتین مو و فیلتر ترکیبات کامل‌تر می‌شود.</p>
+            </div>
+          </div>
           <div className="option-grid">
             {hairTypes.map(([value, label]) => (
               <label key={value} className="choice-card">
@@ -108,12 +144,14 @@ export default async function PassportPage() {
           </div>
         </section>
 
+        </div>
         <div className="form-actions">
-          <p>با ذخیره پروفایل، پیشنهادها براساس همین اطلاعات محاسبه می‌شوند.</p>
-          <button type="submit" className="primary-action">ذخیره و دیدن پیشنهادها</button>
+          <strong>آماده دیدن نتیجه‌ای؟</strong>
+          <p>پیشنهادها با توجه به پاسخ‌هایت مرتب می‌شوند و دلیل هر امتیاز را می‌بینی.</p>
+          <button type="submit" className="primary-action">ساخت پاسپورت و دیدن نتیجه</button>
+          <span className="privacy-note">اطلاعات این فرم فقط برای شخصی‌سازی پیشنهادها استفاده می‌شود.</span>
         </div>
       </form>
     </main>
   );
 }
-
