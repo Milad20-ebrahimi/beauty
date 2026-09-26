@@ -38,6 +38,11 @@ a {
   gap: 18px;
 }
 
+.compact-hero {
+  min-height: auto;
+  padding: 40px 0 28px;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--accent);
@@ -111,6 +116,124 @@ h1 {
   min-height: 72px;
 }
 
+.profile-summary,
+.empty-state,
+.product-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.profile-summary {
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.profile-summary h2 {
+  margin: 0 0 14px;
+}
+
+.summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.summary-row span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: #fff;
+}
+
+.recommendation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.empty-state {
+  padding: 22px;
+  color: var(--muted);
+}
+
+.product-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  padding: 22px;
+}
+
+.product-card h2,
+.product-card h3,
+.product-card p {
+  margin: 0;
+}
+
+.muted,
+.product-description {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.score-badge {
+  min-width: 120px;
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 8px;
+  background: var(--accent-strong);
+  color: #fff;
+  text-align: center;
+}
+
+.score-badge strong {
+  font-size: 34px;
+}
+
+.score-badge span {
+  font-size: 13px;
+}
+
+.product-description,
+.reason-grid,
+.card-footer {
+  grid-column: 1 / -1;
+}
+
+.reason-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.reason-grid div {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.reason-grid h3 {
+  font-size: 16px;
+}
+
+.reason-grid ul {
+  margin: 10px 0 0;
+  padding: 0 20px 0 0;
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+.card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .home-shell {
     width: min(100% - 24px, 1120px);
@@ -129,5 +252,13 @@ h1 {
   .hero-actions a {
     width: 100%;
   }
-}
 
+  .product-card,
+  .reason-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .score-badge {
+    width: 100%;
+  }
+}
