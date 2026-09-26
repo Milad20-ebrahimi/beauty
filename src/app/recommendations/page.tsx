@@ -1,14 +1,22 @@
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { calculateMatchScore, type MatchProfile } from "@/features/recommendation/match-score";
 
 export const dynamic = "force-dynamic";
 
-const demoProfile: MatchProfile = {
-  skinType: "OILY",
-  budgetTier: "BALANCED",
-  fragranceFree: true,
-  alcoholFree: true,
-  concernSlugs: ["acne", "sun-protection", "basic-routine"]
+const skinTypeLabels: Record<string, string> = {
+  OILY: "چرب",
+  DRY: "خشک",
+  COMBINATION: "مختلط",
+  NORMAL: "نرمال",
+  SENSITIVE: "حساس",
+  UNKNOWN: "نامشخص"
+};
+
+const budgetLabels: Record<string, string> = {
+  ECONOMY: "اقتصادی",
+  BALANCED: "متعادل",
+  PREMIUM: "Premium"
 };
 
 function formatPrice(price: number) {
@@ -16,6 +24,16 @@ function formatPrice(price: number) {
 }
 
 export default async function RecommendationsPage() {
+  const cookieStore = await cookies();
+  const profileId = cookieStore.get("beauty_profile_id")?.value;
+
+  const savedProfile = profileId
+    ? await prisma.beautyProfile.findUnique({
+        where: { id: profileId },
+        include: { concerns: { include: { concern: true } } }
+      })
+    : null;
+
   const products = await prisma.product.findMany({
     where: { status: "ACTIVE" },
     include: {
@@ -31,9 +49,21 @@ export default async function RecommendationsPage() {
     orderBy: { createdAt: "desc" }
   });
 
+  const activeProfile: MatchProfile | null = savedProfile
+    ? {
+        skinType: savedProfile.skinType,
+        budgetTier: savedProfile.budgetTier,
+        fragranceFree: savedProfile.fragranceFree,
+        alcoholFree: savedProfile.alcoholFree,
+        concernSlugs: savedProfile.concerns.map((item) => item.concern.slug)
+      }
+    : null;
+
   const scoredProducts = products
     .map((product) => {
-      const score = calculateMatchScore(demoProfile, {
+      if (!activeProfile) return null;
+
+      const score = calculateMatchScore(activeProfile, {
         budgetTier: product.budgetTier,
         fragranceFree: product.fragranceFree,
         alcoholFree: product.alcoholFree,
@@ -41,33 +71,44 @@ export default async function RecommendationsPage() {
         skinSuitability: Object.fromEntries(product.skinSuitability.map((item) => [item.skinType, item.score]))
       });
 
-      const similarReviews = product.reviews.filter((review) => review.skinTypeAtReview === demoProfile.skinType);
+      const similarReviews = product.reviews.filter((review) => review.skinTypeAtReview === activeProfile.skinType);
 
       return { product, score, similarReviews };
     })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.score.score - a.score.score);
 
   return (
     <main className="home-shell">
       <section className="hero compact-hero">
         <p className="eyebrow">Personal Match Score</p>
-        <h1>پیشنهاد محصول براساس پروفایل نمونه</h1>
+        <h1>پیشنهاد محصول براساس Beauty Passport تو</h1>
         <p className="hero-copy">
-          این صفحه فعلاً یک demo واقعی است: محصولات از PostgreSQL خوانده می‌شوند و امتیاز هر محصول سمت سرور محاسبه می‌شود.
+          محصولات از PostgreSQL خوانده می‌شوند و امتیاز هر محصول سمت سرور براساس پروفایلی که ساخته‌ای محاسبه می‌شود.
         </p>
       </section>
 
-      <section className="profile-summary" aria-labelledby="profile-title">
-        <h2 id="profile-title">پروفایل تست</h2>
-        <div className="summary-row">
-          <span>نوع پوست: چرب</span>
-          <span>بودجه: متعادل</span>
-          <span>ترجیح: بدون عطر و الکل</span>
-          <span>نیاز: جوش + ضدآفتاب + روتین ساده</span>
-        </div>
-      </section>
+      {activeProfile ? (
+        <section className="profile-summary" aria-labelledby="profile-title">
+          <h2 id="profile-title">پروفایل فعال</h2>
+          <div className="summary-row">
+            <span>نوع پوست: {skinTypeLabels[activeProfile.skinType]}</span>
+            <span>بودجه: {budgetLabels[activeProfile.budgetTier]}</span>
+            {activeProfile.fragranceFree ? <span>ترجیح: بدون عطر</span> : null}
+            {activeProfile.alcoholFree ? <span>ترجیح: بدون الکل</span> : null}
+            {savedProfile?.concerns.map((item) => <span key={item.concernId}>نیاز: {item.concern.title}</span>)}
+          </div>
+          <a href="/passport" className="inline-link">ویرایش Beauty Passport</a>
+        </section>
+      ) : (
+        <section className="empty-state">
+          <h2>هنوز Beauty Passport نداری.</h2>
+          <p>اول چند سؤال کوتاه جواب بده تا پیشنهادها شخصی‌سازی شوند.</p>
+          <a href="/passport" className="primary-action">ساخت Beauty Passport</a>
+        </section>
+      )}
 
-      <section className="recommendation-list" aria-label="پیشنهادهای محصول">
+      {activeProfile ? <section className="recommendation-list" aria-label="پیشنهادهای محصول">
         {scoredProducts.length === 0 ? (
           <div className="empty-state">
             هنوز محصولی در دیتابیس نیست. اول دستور <code>npm run db:seed</code> را اجرا کن.
@@ -114,8 +155,7 @@ export default async function RecommendationsPage() {
             </article>
           ))
         )}
-      </section>
+      </section> : null}
     </main>
   );
 }
-
