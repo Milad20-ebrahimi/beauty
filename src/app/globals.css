@@ -297,6 +297,31 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .admin-check-grid.concerns small { color: var(--muted); font-weight: 400; line-height: 1.6; }
 .admin-form-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 8px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.94); padding: 13px; box-shadow: 0 -10px 30px rgba(20,50,41,.06); backdrop-filter: blur(12px); }
 .admin-form-actions button { border: 0; }
+.compact-form { max-width: 760px; }
+.admin-entity-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.admin-entity-card { display: grid; grid-template-columns: 52px 1fr; gap: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 18px; }
+.entity-monogram { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 8px; background: var(--brand-soft); color: var(--brand-dark); font-size: 20px; font-weight: 900; }
+.entity-main { min-width: 0; display: grid; align-content: center; gap: 4px; }
+.entity-main strong { font-size: 14px; }
+.entity-main > span { width: fit-content; color: var(--brand); font-size: 10px; }
+.entity-main p { margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.entity-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 13px; border-top: 1px solid var(--line); }
+.entity-meta span { border-radius: 999px; background: var(--canvas); padding: 6px 8px; color: var(--muted); font-size: 9px; font-weight: 700; }
+.entity-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.entity-actions a, .entity-actions button, .entity-actions > span { border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 7px 10px; color: var(--muted); font-size: 9px; font-weight: 800; }
+.entity-actions a { border-color: var(--brand); color: var(--brand); }
+.entity-actions button { cursor: pointer; }
+.entity-actions button:hover { border-color: var(--coral); color: var(--coral); }
+.entity-actions > span { opacity: .48; }
+.admin-category-list { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.admin-category-row { display: grid; grid-template-columns: 52px minmax(150px,1.2fr) minmax(100px,.7fr) minmax(130px,.8fr) auto; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); padding: 15px 17px; }
+.admin-category-row:last-child { border: 0; }
+.category-level { width: 42px; border-radius: 999px; background: var(--brand-soft); padding: 6px 5px; color: var(--brand-dark); font-size: 9px; font-weight: 900; text-align: center; }
+.admin-category-row:has(.category-level:first-child) .category-level { white-space: nowrap; }
+.category-parent { display: grid; gap: 4px; }
+.category-parent small { color: var(--muted); font-size: 9px; }
+.category-parent span { font-size: 11px; font-weight: 700; }
+.admin-category-row .entity-meta, .admin-category-row .entity-actions { grid-column: auto; padding: 0; border: 0; }
 
 .admin-login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(420px,.82fr) minmax(0,1.18fr); background: #fff; }
 .admin-login-panel { width: min(100%,470px); display: grid; align-content: center; gap: 28px; padding: 55px 64px; }
@@ -339,6 +364,9 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .admin-product-cell { display: none; }
   .admin-row-actions { justify-self: end; }
   .admin-row-actions a:first-child, .admin-row-actions form { display: none; }
+  .admin-entity-grid { grid-template-columns: 1fr; }
+  .admin-category-row { grid-template-columns: 45px 1fr auto; }
+  .admin-category-row .category-parent, .admin-category-row .entity-meta { display: none; }
   .admin-login-page { grid-template-columns: 1fr; }
   .admin-login-panel { width: min(100%,560px); margin: 0 auto; }
   .admin-login-aside { display: none; }
@@ -384,4 +412,5 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .admin-login-panel { padding: 35px 22px; }
   .admin-login-copy { margin-top: 10px; }
   .admin-login-copy h1 { font-size: 34px; }
+  .admin-category-row { padding: 12px; }
 }

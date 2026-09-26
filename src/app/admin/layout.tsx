@@ -13,8 +13,8 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
         <nav className="admin-nav" aria-label="منوی مدیریت">
           <a href="/admin">نمای کلی</a>
           <a href="/admin/products">محصولات</a>
-          <span>برندها <small>به‌زودی</small></span>
-          <span>دسته‌بندی‌ها <small>به‌زودی</small></span>
+          <a href="/admin/brands">برندها</a>
+          <a href="/admin/categories">دسته‌بندی‌ها</a>
           <span>نظرات <small>به‌زودی</small></span>
           <span>کاربران <small>به‌زودی</small></span>
         </nav>
