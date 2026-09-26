@@ -80,23 +80,25 @@ export default async function RecommendationsPage() {
 
   return (
     <main className="home-shell">
-      <section className="hero compact-hero">
-        <p className="eyebrow">Personal Match Score</p>
-        <h1>پیشنهاد محصول براساس Beauty Passport تو</h1>
-        <p className="hero-copy">
-          محصولات از PostgreSQL خوانده می‌شوند و امتیاز هر محصول سمت سرور براساس پروفایلی که ساخته‌ای محاسبه می‌شود.
-        </p>
+      <section className="compact-hero results-header">
+        <div className="hero-content">
+          <p className="eyebrow">انتخاب‌شده برای تو</p>
+          <h1>محصول‌های مناسب پوست تو</h1>
+          <p className="hero-copy">از بیشترین تطابق مرتب شده‌اند؛ دلیل امتیاز و نکات احتیاط هر محصول را ببین.</p>
+        </div>
       </section>
 
       {activeProfile ? (
         <section className="profile-summary" aria-labelledby="profile-title">
-          <h2 id="profile-title">پروفایل فعال</h2>
+          <div>
+            <p className="eyebrow">پروفایل فعال</p>
+            <h2 id="profile-title">پیشنهادها برای پوست {skinTypeLabels[activeProfile.skinType]}</h2>
+          </div>
           <div className="summary-row">
-            <span>نوع پوست: {skinTypeLabels[activeProfile.skinType]}</span>
             <span>بودجه: {budgetLabels[activeProfile.budgetTier]}</span>
-            {activeProfile.fragranceFree ? <span>ترجیح: بدون عطر</span> : null}
-            {activeProfile.alcoholFree ? <span>ترجیح: بدون الکل</span> : null}
-            {savedProfile?.concerns.map((item) => <span key={item.concernId}>نیاز: {item.concern.title}</span>)}
+            {activeProfile.fragranceFree ? <span>بدون عطر</span> : null}
+            {activeProfile.alcoholFree ? <span>بدون الکل</span> : null}
+            {savedProfile?.concerns.map((item) => <span key={item.concernId}>{item.concern.title}</span>)}
           </div>
           <a href="/passport" className="inline-link">ویرایش Beauty Passport</a>
         </section>
@@ -116,21 +118,20 @@ export default async function RecommendationsPage() {
         ) : (
           scoredProducts.map(({ product, score, similarReviews }) => (
             <article key={product.id} className="product-card">
-              <div>
+              <div className="product-visual">
+                <div className="bottle-shape">{product.brand.name}</div>
+                <div className="score-badge"><strong>{score.score}%</strong><span>تطابق</span></div>
+              </div>
+              <div className="product-main">
                 <p className="eyebrow">{product.brand.name} / {product.category.title}</p>
                 <h2>{product.title}</h2>
                 {product.subtitle ? <p className="muted">{product.subtitle}</p> : null}
+                <p className="product-description">{product.description}</p>
+                <div className="product-tags"><span>{product.fragranceFree ? "بدون عطر" : "دارای رایحه"}</span><span>{budgetLabels[product.budgetTier]}</span></div>
               </div>
-
-              <div className="score-badge">
-                <strong>{score.score}%</strong>
-                <span>Match for you</span>
-              </div>
-
-              <p className="product-description">{product.description}</p>
 
               <div className="reason-grid">
-                <div>
+                <div className="reason-panel">
                   <h3>چرا مناسب است؟</h3>
                   <ul>
                     {score.positiveReasons.length > 0
@@ -138,7 +139,7 @@ export default async function RecommendationsPage() {
                       : <li>برای پیشنهاد دقیق‌تر به داده بیشتری نیاز داریم.</li>}
                   </ul>
                 </div>
-                <div>
+                <div className="reason-panel warning">
                   <h3>نکات احتیاط</h3>
                   <ul>
                     {score.warnings.length > 0
@@ -149,8 +150,8 @@ export default async function RecommendationsPage() {
               </div>
 
               <div className="card-footer">
-                <span>{formatPrice(product.price)} تومان</span>
-                <span>{similarReviews.length} تجربه از پوست مشابه</span>
+                <span className="price"><strong>{formatPrice(product.price)} تومان</strong><small>قیمت ثبت‌شده</small></span>
+                <span className="review-count">{similarReviews.length} تجربه از پوست مشابه</span>
               </div>
             </article>
           ))
