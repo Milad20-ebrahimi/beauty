@@ -116,6 +116,95 @@ h1 {
   min-height: 72px;
 }
 
+.passport-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 22px;
+}
+
+.form-section h2,
+.form-actions p,
+.empty-state h2,
+.empty-state p {
+  margin: 0;
+}
+
+.form-section h2 {
+  margin-bottom: 16px;
+  font-size: 22px;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.choice-card {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.choice-card input,
+.toggle-list input {
+  accent-color: var(--accent);
+}
+
+.toggle-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--muted);
+}
+
+.toggle-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.form-actions p {
+  color: var(--muted);
+}
+
+.form-actions button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.inline-link {
+  display: inline-flex;
+  margin-top: 14px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .profile-summary,
 .empty-state,
 .product-card {
@@ -153,6 +242,9 @@ h1 {
 }
 
 .empty-state {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
   padding: 22px;
   color: var(--muted);
 }
@@ -250,6 +342,10 @@ h1 {
   }
 
   .hero-actions a {
+    width: 100%;
+  }
+
+  .form-actions .primary-action {
     width: 100%;
   }
 
