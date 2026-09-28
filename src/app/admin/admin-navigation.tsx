@@ -21,6 +21,12 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
     ]
   },
   {
+    label: "فروش",
+    links: [
+      { href: "/admin/orders", icon: "#", title: "سفارش‌ها", description: "پرداخت، آماده‌سازی و ارسال" }
+    ]
+  },
+  {
     label: "بررسی خروجی مشتری",
     links: [
       { href: "/recommendations", icon: "✦", title: "پیشنهادهای هوشمند", description: "دیدن رتبه‌بندی محصولات" },
@@ -51,7 +57,7 @@ export function AdminNavigation() {
       ))}
       <div className="admin-roadmap">
         <strong>مراحل بعدی فروشگاه</strong>
-        <p>سبد خرید، سفارش‌ها، کاربران و نظرات بعد از تکمیل کاتالوگ ساخته می‌شوند.</p>
+        <p>پرداخت، حساب مشتری و نظرات تأییدشده در مراحل بعد اضافه می‌شوند.</p>
       </div>
     </nav>
   );

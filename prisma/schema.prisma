@@ -355,9 +355,24 @@ model Order {
   updatedAt   DateTime    @updatedAt
   user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items       OrderItem[]
+  address     OrderAddress?
 
   @@index([userId])
   @@index([status])
+}
+
+model OrderAddress {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  recipientName String
+  phone         String
+  province      String
+  city          String
+  addressLine   String
+  postalCode    String?
+  deliveryNote  String?
+  createdAt     DateTime @default(now())
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItem {
@@ -398,4 +413,3 @@ model AnalyticsEvent {
   @@index([name, createdAt])
   @@index([userId])
 }
-
