@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { logoutAdmin } from "./logout-action";
+import { AdminNavigation } from "./admin-navigation";
 
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await requireAdmin();
@@ -10,15 +11,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
           <span className="brand-symbol">B</span>
           <div><strong>مدیریت BeautyOS</strong><small>پنل مدیریت فروشگاه</small></div>
         </div>
-        <nav className="admin-nav" aria-label="منوی مدیریت">
-          <a href="/admin">نمای کلی</a>
-          <a href="/admin/products">محصولات</a>
-          <a href="/admin/brands">برندها</a>
-          <a href="/admin/categories">دسته‌بندی‌ها</a>
-          <a href="/admin/ingredients">ترکیبات</a>
-          <span>نظرات <small>به‌زودی</small></span>
-          <span>کاربران <small>به‌زودی</small></span>
-        </nav>
+        <AdminNavigation />
         <div className="admin-sidebar-user">
           <span>{user.displayName?.charAt(0) || "م"}</span>
           <div><strong>{user.displayName || "مدیر"}</strong><small>{user.role === "MANAGER" ? "مدیر کل" : "ادمین"}</small></div>

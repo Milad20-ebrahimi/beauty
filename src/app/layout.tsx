@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SiteNavigation } from "./site-navigation";
 
 export const metadata: Metadata = {
   title: "BeautyOS",
@@ -19,12 +20,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <small>انتخاب زیبایی، براساس خودت</small>
               </span>
             </a>
-            <nav className="site-nav" aria-label="ناوبری اصلی">
-              <a href="/needs">نیازها</a>
-              <a href="/recommendations">پیشنهادهای من</a>
-              <a href="/routine">روتین من</a>
-              <a href="/passport" className="nav-cta">ساخت پروفایل</a>
-            </nav>
+            <SiteNavigation />
           </header>
         </div>
         {children}
