@@ -7,10 +7,11 @@ const links = [
   { href: "/needs", label: "انتخاب براساس نیاز", short: "نیازها", icon: "◇" },
   { href: "/recommendations", label: "پیشنهادهای من", short: "پیشنهادها", icon: "✦" },
   { href: "/routine", label: "روتین من", short: "روتین", icon: "☼" },
+  { href: "/cart", label: "سبد خرید", short: "سبد", icon: "▣" },
   { href: "/passport", label: "Beauty Passport", short: "پروفایل", icon: "◎" }
 ];
 
-export function SiteNavigation() {
+export function SiteNavigation({ cartCount = 0 }: { cartCount?: number }) {
   const pathname = usePathname();
 
   return (
@@ -22,6 +23,7 @@ export function SiteNavigation() {
             <span className="nav-icon" aria-hidden="true">{link.icon}</span>
             <span className="nav-label">{link.label}</span>
             <span className="nav-short">{link.short}</span>
+            {link.href === "/cart" && cartCount > 0 ? <span className="nav-cart-count">{new Intl.NumberFormat("fa-IR").format(cartCount)}</span> : null}
           </a>
         );
       })}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { saveRoutine } from "./actions";
+import { addRoutineToCart } from "@/app/cart/actions";
 
 type Candidate = {
   id: string;
@@ -90,7 +91,7 @@ export function RoutineEditor({ slots, saved, initialSelected }: { slots: Slot[]
       ))}
       <aside className="routine-summary">
         <div><span>مجموع محصولات انتخابی</span><strong>{formatPrice(total)} تومان</strong><small>محصول مشترک صبح و شب فقط یک‌بار محاسبه شده است.</small></div>
-        <button className="primary-action" type="submit">ذخیره روتین من</button>
+        <div className="routine-summary-actions"><button className="secondary-action" type="submit">ذخیره روتین</button><button className="primary-action" type="submit" formAction={addRoutineToCart}>افزودن همه به سبد</button></div>
       </aside>
     </form>
   );

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { calculateMatchScore, type MatchProfile } from "@/features/recommendation/match-score";
+import { addToCart } from "@/app/cart/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -130,10 +131,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </span>
           </div>
 
-          <button type="button" className="primary-action detail-cta" disabled={availableStock === 0}>
-            افزودن به روتین من
-          </button>
-          <p className="cta-note">این دکمه فعلاً محصول را برای ساخت روتین آینده آماده می‌کند و خریدی انجام نمی‌شود.</p>
+          <form action={addToCart} className="detail-cart-form">
+            <input type="hidden" name="productId" value={product.id} />
+            <button type="submit" className="primary-action detail-cta" disabled={availableStock === 0}>افزودن به سبد خرید</button>
+          </form>
+          <p className="cta-note">افزودن به سبد موجودی را کم نمی‌کند؛ موجودی هنگام ثبت سفارش دوباره بررسی می‌شود.</p>
         </div>
       </section>
 

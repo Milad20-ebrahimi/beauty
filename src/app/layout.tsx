@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SiteNavigation } from "./site-navigation";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { CART_COOKIE } from "@/lib/cart";
 
 export const metadata: Metadata = {
   title: "BeautyOS",
   description: "فروشگاه زیبایی که کمک می‌کند محصول اشتباه نخرید."
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const sessionId = (await cookies()).get(CART_COOKIE)?.value;
+  const cart = sessionId ? await prisma.cart.findFirst({ where: { sessionId }, select: { items: { select: { quantity: true } } } }) : null;
+  const cartCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   return (
     <html lang="fa" dir="rtl">
       <body>
@@ -20,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <small>انتخاب زیبایی، براساس خودت</small>
               </span>
             </a>
-            <SiteNavigation />
+            <SiteNavigation cartCount={cartCount} />
           </header>
         </div>
         {children}
