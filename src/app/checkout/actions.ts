@@ -7,23 +7,36 @@ import { prisma } from "@/lib/prisma";
 import { CART_COOKIE } from "@/lib/cart";
 
 const toEnglishDigits = (value: string) => value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
-const read = (formData: FormData, name: string) => String(formData.get(name) || "").trim();
+const cleanText = (value: string) => value.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/\s+/g, " ").trim();
+const read = (formData: FormData, name: string) => cleanText(String(formData.get(name) || ""));
+const onlyDigits = (value: string) => toEnglishDigits(value).replace(/[^0-9]/g, "");
+
+function normalizeIranianPhone(value: string) {
+  const digits = onlyDigits(value);
+  if (digits.startsWith("0098")) return `0${digits.slice(4)}`;
+  if (digits.startsWith("98")) return `0${digits.slice(2)}`;
+  if (digits.startsWith("9") && digits.length === 10) return `0${digits}`;
+  return digits;
+}
 
 export async function placeOrder(formData: FormData) {
   const sessionId = (await cookies()).get(CART_COOKIE)?.value;
   if (!sessionId) redirect("/cart");
 
   const recipientName = read(formData, "recipientName");
-  const phone = toEnglishDigits(read(formData, "phone")).replace(/[\s-]/g, "");
+  const phone = normalizeIranianPhone(read(formData, "phone"));
   const province = read(formData, "province");
   const city = read(formData, "city");
   const addressLine = read(formData, "addressLine");
-  const postalCode = toEnglishDigits(read(formData, "postalCode")).replace(/\s/g, "");
+  const postalCode = onlyDigits(read(formData, "postalCode"));
   const deliveryNote = read(formData, "deliveryNote");
 
-  if (recipientName.length < 3 || !/^09\d{9}$/.test(phone) || province.length < 2 || city.length < 2 || addressLine.length < 10 || (postalCode && !/^\d{10}$/.test(postalCode))) {
-    redirect("/checkout?error=validation");
-  }
+  if (recipientName.length < 2) redirect("/checkout?error=name");
+  if (!/^09\d{9}$/.test(phone)) redirect("/checkout?error=phone");
+  if (province.length < 2) redirect("/checkout?error=province");
+  if (city.length < 2) redirect("/checkout?error=city");
+  if (addressLine.length < 6) redirect("/checkout?error=address");
+  if (postalCode && !/^\d{10}$/.test(postalCode)) redirect("/checkout?error=postal");
 
   try {
     const order = await prisma.$transaction(async (tx) => {
