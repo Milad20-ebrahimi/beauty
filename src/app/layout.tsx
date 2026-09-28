@@ -22,6 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <nav className="site-nav" aria-label="ناوبری اصلی">
               <a href="/needs">نیازها</a>
               <a href="/recommendations">پیشنهادهای من</a>
+              <a href="/routine">روتین من</a>
               <a href="/passport" className="nav-cta">ساخت پروفایل</a>
             </nav>
           </header>
