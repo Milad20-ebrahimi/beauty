@@ -26,7 +26,8 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
     links: [
       { href: "/admin/orders", icon: "#", title: "سفارش‌ها", description: "پرداخت، آماده‌سازی و ارسال" },
       { href: "/admin/payment-settings", icon: "$", title: "تنظیمات پرداخت", description: "شماره کارت و راهنمای مشتری" },
-      { href: "/admin/shipping", icon: "↗", title: "روش‌های ارسال", description: "هزینه و زمان تحویل" }
+      { href: "/admin/shipping", icon: "↗", title: "روش‌های ارسال", description: "هزینه و زمان تحویل" },
+      { href: "/admin/reviews", icon: "★", title: "نظرات مشتریان", description: "بررسی و انتشار تجربه‌ها" }
     ]
   },
   {

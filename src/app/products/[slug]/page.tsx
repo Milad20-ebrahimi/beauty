@@ -2,7 +2,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { calculateMatchScore, type MatchProfile } from "@/features/recommendation/match-score";
+import { calculateMatchScore, getSimilarReviewSignal, type MatchProfile } from "@/features/recommendation/match-score";
 import { addToCart } from "@/app/cart/actions";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         concerns: { include: { concern: true } },
         skinSuitability: { orderBy: { score: "desc" } },
         ingredients: { include: { ingredient: true }, orderBy: { position: "asc" } },
-        reviews: { include: { outcome: true }, orderBy: { createdAt: "desc" } }
+        reviews: { where: { status: "APPROVED" }, include: { outcome: true }, orderBy: { createdAt: "desc" } }
       }
     }),
     profileId
@@ -68,18 +68,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       }
     : null;
 
+  const profileSimilarReviews = activeProfile
+    ? product.reviews.filter((review) => review.skinTypeAtReview === activeProfile.skinType)
+    : [];
+
   const match = activeProfile
     ? calculateMatchScore(activeProfile, {
         budgetTier: product.budgetTier,
         fragranceFree: product.fragranceFree,
         alcoholFree: product.alcoholFree,
         concernSlugs: product.concerns.map((item) => item.concern.slug),
-        skinSuitability: Object.fromEntries(product.skinSuitability.map((item) => [item.skinType, item.score]))
+        skinSuitability: Object.fromEntries(product.skinSuitability.map((item) => [item.skinType, item.score])),
+        similarReviewSignal: getSimilarReviewSignal(
+          profileSimilarReviews.map((review) => ({ rating: review.rating, irritation: review.outcome?.irritation }))
+        )
       })
     : null;
 
   const similarReviews = activeProfile
-    ? product.reviews.filter((review) => review.skinTypeAtReview === activeProfile.skinType)
+    ? profileSimilarReviews
     : product.reviews;
   const averageRating = product.reviews.length
     ? product.reviews.reduce((total, review) => total + review.rating, 0) / product.reviews.length
@@ -185,7 +192,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <article key={review.id} className="review-card">
               <div className="review-meta"><strong>{review.title || "تجربه استفاده"}</strong><span>{"★".repeat(review.rating)}</span></div>
               <p>{review.body || "بدون توضیح"}</p>
-              <footer><span>پوست {skinTypeLabels[review.skinTypeAtReview]}</span><span>{review.wouldRepurchase ? "دوباره می‌خرم" : "دنبال جایگزینم"}</span></footer>
+              <footer><span>پوست {skinTypeLabels[review.skinTypeAtReview]} {review.source === "VERIFIED_PURCHASE" ? "· خرید تأییدشده" : ""}</span><span>{review.wouldRepurchase ? "دوباره می‌خرم" : "دنبال جایگزینم"}</span></footer>
+              {review.adminReply ? <div className="review-admin-reply"><strong>پاسخ BeautyOS</strong><p>{review.adminReply}</p></div> : null}
             </article>
           )) : <div className="empty-state">هنوز تجربه‌ای از پوست مشابه تو برای این محصول نداریم.</div>}
         </div>

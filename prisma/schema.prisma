@@ -77,6 +77,12 @@ enum ReviewSource {
   IMPORTED
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum PaymentReceiptStatus {
   PENDING
   APPROVED
@@ -288,7 +294,9 @@ model Review {
   id               String        @id @default(cuid())
   productId        String
   userId           String?
+  orderItemId      String?       @unique
   source           ReviewSource  @default(CUSTOMER)
+  status           ReviewStatus  @default(PENDING)
   rating           Int
   title            String?
   body             String?
@@ -297,12 +305,16 @@ model Review {
   wouldRepurchase  Boolean?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  adminReply       String?
+  reviewedAt       DateTime?
   product          Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderItem        OrderItem?     @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
   outcome          ReviewOutcome?
 
   @@index([productId, skinTypeAtReview])
   @@index([source])
+  @@index([status, createdAt])
 }
 
 model ReviewOutcome {
@@ -477,6 +489,7 @@ model OrderItem {
   unitPrice Int
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
+  review    Review?
 }
 
 model MatchScoreSnapshot {

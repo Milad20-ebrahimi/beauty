@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { calculateMatchScore, type MatchProfile } from "@/features/recommendation/match-score";
+import { calculateMatchScore, getSimilarReviewSignal, type MatchProfile } from "@/features/recommendation/match-score";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +43,8 @@ export default async function RecommendationsPage() {
       concerns: { include: { concern: true } },
       skinSuitability: true,
       reviews: {
+        where: { status: "APPROVED" },
+        include: { outcome: true },
         take: 6,
         orderBy: { createdAt: "desc" }
       }
@@ -64,15 +66,17 @@ export default async function RecommendationsPage() {
     .map((product) => {
       if (!activeProfile) return null;
 
+      const similarReviews = product.reviews.filter((review) => review.skinTypeAtReview === activeProfile.skinType);
       const score = calculateMatchScore(activeProfile, {
         budgetTier: product.budgetTier,
         fragranceFree: product.fragranceFree,
         alcoholFree: product.alcoholFree,
         concernSlugs: product.concerns.map((item) => item.concern.slug),
-        skinSuitability: Object.fromEntries(product.skinSuitability.map((item) => [item.skinType, item.score]))
+        skinSuitability: Object.fromEntries(product.skinSuitability.map((item) => [item.skinType, item.score])),
+        similarReviewSignal: getSimilarReviewSignal(
+          similarReviews.map((review) => ({ rating: review.rating, irritation: review.outcome?.irritation }))
+        )
       });
-
-      const similarReviews = product.reviews.filter((review) => review.skinTypeAtReview === activeProfile.skinType);
 
       return { product, score, similarReviews };
     })

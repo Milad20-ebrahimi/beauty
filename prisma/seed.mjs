@@ -248,6 +248,7 @@ async function main() {
         data: {
           productId: product.id,
           source: ReviewSource.IMPORTED,
+          status: "APPROVED",
           rating,
           title,
           body,

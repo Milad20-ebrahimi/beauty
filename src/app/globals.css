@@ -702,6 +702,54 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .admin-login-aside h2 { margin: 14px 0; max-width: 560px; font-size: 46px; line-height: 1.45; }
 .admin-login-aside p { max-width: 520px; margin: 0; color: #bbd0c8; line-height: 2; }
 
+.customer-order-product { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding: 7px 0; }
+.customer-order-product:last-child { border-bottom: 0; }
+.customer-order-product a { border-radius: 999px; background: var(--brand-soft); padding: 7px 10px; color: var(--brand-dark); font-size: 9px; font-weight: 900; white-space: nowrap; }
+.customer-order-product > span { color: var(--muted); font-size: 9px; font-weight: 800; }
+.review-create-layout { display: grid; grid-template-columns: minmax(220px,.6fr) minmax(0,1.4fr); align-items: start; gap: 24px; }
+.review-create-layout > aside { position: sticky; top: 94px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 18px; }
+.review-create-layout > aside img, .review-create-layout > aside > span { width: 100%; aspect-ratio: 1; display: block; border-radius: 8px; background: var(--canvas); object-fit: cover; }
+.review-create-layout > aside p { margin: 15px 0 4px; color: var(--brand); font-size: 10px; font-weight: 900; }
+.review-create-layout > aside h2 { margin: 0 0 8px; font-size: 18px; }
+.review-create-layout > aside small { color: var(--muted); line-height: 1.8; }
+.review-form { display: grid; gap: 12px; }
+.review-form > section { display: grid; gap: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 22px; }
+.review-form h2 { margin: 0; font-size: 18px; }
+.review-form label { display: grid; gap: 7px; color: var(--ink); font-size: 11px; font-weight: 800; }
+.review-form label small { color: var(--muted); font-weight: 500; }
+.review-form input, .review-form select, .review-form textarea { width: 100%; border: 1px solid var(--line); border-radius: 7px; outline: none; background: var(--canvas); padding: 11px 12px; font: inherit; }
+.review-form textarea { resize: vertical; line-height: 1.9; }
+.review-form input:focus, .review-form select:focus, .review-form textarea:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(23,107,82,.08); }
+.review-form-grid, .review-question-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.review-submit-note { border-right: 3px solid var(--brand); border-radius: 7px; background: var(--brand-soft); padding: 12px 14px; color: var(--brand-dark); font-size: 10px; line-height: 1.8; }
+.review-form > .primary-action { border: 0; justify-self: end; cursor: pointer; }
+.review-admin-reply { margin-top: 14px; border-right: 3px solid var(--brand); border-radius: 7px; background: var(--brand-soft); padding: 12px; }
+.review-admin-reply strong { color: var(--brand-dark); font-size: 10px; }
+.review-admin-reply p { margin: 5px 0 0; }
+.admin-review-list { display: grid; gap: 12px; }
+.admin-review-list > article { overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.admin-review-list > article > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 15px 18px; }
+.admin-review-list > article > header > div { display: flex; align-items: center; gap: 10px; }
+.admin-review-list > article > header > span { color: #ad7b00; font-size: 10px; font-weight: 900; }
+.review-admin-status { border-radius: 999px; padding: 6px 9px; font-size: 8px; font-weight: 900; }
+.review-admin-status.pending { background: #fff4d6; color: #8a6500; }
+.review-admin-status.approved { background: #e7f5ef; color: #176b52; }
+.review-admin-status.rejected { background: #fff0ed; color: #a63d2d; }
+.admin-review-content { display: grid; gap: 9px; padding: 18px; }
+.admin-review-content h2 { margin: 0; font-size: 17px; }
+.admin-review-content > p { margin: 0; color: var(--muted); line-height: 1.9; }
+.admin-review-content > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-review-content > div span { border-radius: 999px; background: var(--canvas); padding: 6px 9px; color: var(--muted); font-size: 9px; }
+.admin-review-list > article > footer { border-top: 1px solid var(--line); background: #fbfcfa; padding: 15px 18px; }
+.admin-review-list > article > footer form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; }
+.admin-review-list > article > footer label { display: grid; gap: 6px; font-size: 10px; font-weight: 800; }
+.admin-review-list > article > footer label small { color: var(--muted); font-weight: 500; }
+.admin-review-list > article > footer input { min-height: 40px; border: 1px solid var(--line); border-radius: 6px; outline: none; padding: 9px 11px; }
+.admin-review-list > article > footer form > div { display: flex; gap: 7px; }
+.admin-review-list > article > footer button { min-height: 40px; border: 1px solid; border-radius: 6px; background: #fff; padding: 8px 12px; font: inherit; font-size: 9px; font-weight: 900; cursor: pointer; }
+.admin-review-list .receipt-approve { border-color: var(--brand); color: var(--brand); }
+.admin-review-list .receipt-reject { border-color: var(--coral); color: var(--coral); }
+
 @media (max-width: 900px) {
   h1 { font-size: 48px; }
   .home-hero { min-height: auto; grid-template-columns: 1fr; gap: 20px; padding-top: 45px; }
@@ -870,4 +918,12 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .shipping-delete { position: static; margin-top: 8px; }
   .shipping-choice-list label { grid-template-columns: 19px 1fr; }
   .shipping-choice-list b { grid-column: 2; }
+  .review-create-layout { grid-template-columns: 1fr; }
+  .review-create-layout > aside { position: static; }
+  .review-form-grid, .review-question-grid { grid-template-columns: 1fr; }
+  .review-form > .primary-action { width: 100%; }
+  .admin-review-list > article > header { align-items: flex-start; flex-direction: column; }
+  .admin-review-list > article > footer form { grid-template-columns: 1fr; }
+  .admin-review-list > article > footer form > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .customer-order-product { align-items: flex-start; flex-direction: column; }
 }

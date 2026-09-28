@@ -13,7 +13,8 @@ export const matchProductSchema = z.object({
   fragranceFree: z.boolean().nullable(),
   alcoholFree: z.boolean().nullable(),
   concernSlugs: z.array(z.string()),
-  skinSuitability: z.record(z.string(), z.number())
+  skinSuitability: z.record(z.string(), z.number()),
+  similarReviewSignal: z.number().min(-5).max(5).optional()
 });
 
 export type MatchProfile = z.infer<typeof matchProfileSchema>;
@@ -82,6 +83,15 @@ export function calculateMatchScore(profile: MatchProfile, product: MatchProduct
     }
   }
 
+  if (typeof product.similarReviewSignal === "number") {
+    score += product.similarReviewSignal;
+    if (product.similarReviewSignal >= 2) {
+      positiveReasons.push("خریداران با پوست مشابه، تجربه مثبتی از این محصول داشته‌اند.");
+    } else if (product.similarReviewSignal <= -2) {
+      warnings.push("تجربه خریداران با پوست مشابه نیاز به احتیاط بیشتر را نشان می‌دهد.");
+    }
+  }
+
   return {
     score: Math.max(0, Math.min(100, score)),
     positiveReasons,
@@ -91,3 +101,14 @@ export function calculateMatchScore(profile: MatchProfile, product: MatchProduct
   };
 }
 
+export function getSimilarReviewSignal(
+  reviews: Array<{ rating: number; irritation?: boolean | null }>
+) {
+  if (reviews.length === 0) return undefined;
+
+  const averageRating = reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+  const irritationRate = reviews.filter((review) => review.irritation === true).length / reviews.length;
+  const rawSignal = (averageRating - 3) * 2 - irritationRate * 3;
+
+  return Math.round(Math.max(-5, Math.min(5, rawSignal)));
+}
