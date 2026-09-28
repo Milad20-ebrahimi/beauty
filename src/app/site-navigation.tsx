@@ -6,8 +6,9 @@ type SiteLink = { href: string; label: string; short: string; icon: string; mobi
 
 const links: SiteLink[] = [
   { href: "/", label: "خانه", short: "خانه", icon: "⌂" },
+  { href: "/products", label: "فروشگاه", short: "فروشگاه", icon: "□" },
   { href: "/needs", label: "انتخاب براساس نیاز", short: "نیازها", icon: "◇", mobileHidden: true },
-  { href: "/recommendations", label: "پیشنهادهای من", short: "پیشنهادها", icon: "✦" },
+  { href: "/recommendations", label: "پیشنهادهای من", short: "پیشنهادها", icon: "✦", mobileHidden: true },
   { href: "/routine", label: "روتین من", short: "روتین", icon: "☼" },
   { href: "/cart", label: "سبد خرید", short: "سبد", icon: "▣" },
   { href: "/passport", label: "Beauty Passport", short: "پروفایل", icon: "◎", mobileHidden: true },

@@ -19,7 +19,7 @@ export default function HomePage() {
           </p>
           <div className="hero-actions">
             <a href="/passport" className="primary-action">شروع تست رایگان ←</a>
-            <a href="#needs" className="secondary-action">انتخاب براساس نیاز</a>
+            <a href="/products" className="secondary-action">مشاهده فروشگاه</a>
           </div>
         </div>
         <div className="hero-preview" aria-label="نمونه نتیجه پیشنهاد شخصی">
