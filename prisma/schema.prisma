@@ -106,6 +106,18 @@ model User {
   analytics      AnalyticsEvent[]
 }
 
+model CustomerOtp {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
 model BeautyProfile {
   id                  String       @id @default(cuid())
   userId              String

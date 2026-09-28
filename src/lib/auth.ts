@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "beauty_admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 12;
+const CUSTOMER_SESSION_COOKIE = "beauty_customer_session";
+const CUSTOMER_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 function authSecret() {
   const secret = process.env.AUTH_SECRET;
@@ -80,4 +82,38 @@ export async function requireAdmin() {
   const user = await getAdminUser();
   if (!user) redirect("/admin-login");
   return user;
+}
+
+export async function createCustomerSession(userId: string) {
+  const expiresAt = Math.floor(Date.now() / 1000) + CUSTOMER_SESSION_MAX_AGE;
+  const payload = `customer.${userId}.${expiresAt}`;
+  (await cookies()).set(CUSTOMER_SESSION_COOKIE, `${payload}.${sign(payload)}`, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: CUSTOMER_SESSION_MAX_AGE, path: "/" });
+}
+
+export async function clearCustomerSession() {
+  (await cookies()).delete(CUSTOMER_SESSION_COOKIE);
+}
+
+export async function getCustomerUser() {
+  const token = (await cookies()).get(CUSTOMER_SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const [scope, userId, expiresAtText, signature] = token.split(".");
+  const payload = `${scope}.${userId}.${expiresAtText}`;
+  const expiresAt = Number(expiresAtText);
+  if (scope !== "customer" || !userId || !signature || !Number.isFinite(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !safeEqual(signature, sign(payload))) return null;
+  return prisma.user.findUnique({ where: { id: userId }, select: { id: true, phone: true, displayName: true, role: true } });
+}
+
+export async function requireCustomer() {
+  const user = await getCustomerUser();
+  if (!user) redirect("/login?next=/account");
+  return user;
+}
+
+export function hashOtp(phone: string, code: string) {
+  return createHmac("sha256", authSecret()).update(`otp.${phone}.${code}`).digest("base64url");
+}
+
+export function verifyOtpHash(phone: string, code: string, expectedHash: string) {
+  return safeEqual(hashOtp(phone, code), expectedHash);
 }
