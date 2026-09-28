@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 function text(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -14,6 +15,7 @@ function slug(value: string) {
 }
 
 export async function createBrand(formData: FormData) {
+  await requireAdmin();
   const name = text(formData, "name");
   const brandSlug = slug(text(formData, "slug"));
   if (!name || !brandSlug) redirect("/admin/brands?error=نام و اسلاگ برند الزامی هستند.");
@@ -29,6 +31,7 @@ export async function createBrand(formData: FormData) {
 }
 
 export async function updateBrand(id: string, formData: FormData) {
+  await requireAdmin();
   const name = text(formData, "name");
   const brandSlug = slug(text(formData, "slug"));
   if (!name || !brandSlug) redirect(`/admin/brands/${id}/edit?error=نام و اسلاگ برند الزامی هستند.`);
@@ -44,6 +47,7 @@ export async function updateBrand(id: string, formData: FormData) {
 }
 
 export async function deleteBrand(formData: FormData) {
+  await requireAdmin();
   const id = text(formData, "id");
   if (!id) return;
   const productCount = await prisma.product.count({ where: { brandId: id } });

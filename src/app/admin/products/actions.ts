@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { BudgetTier, ProductRole, ProductStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
+import { removeManagedProductImages, saveProductImages } from "@/lib/product-media";
 
 function readText(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -64,24 +66,32 @@ function validateProduct(data: ReturnType<typeof productData>) {
 }
 
 export async function createProduct(formData: FormData) {
+  await requireAdmin();
   const data = productData(formData);
   const error = validateProduct(data);
   if (error) redirect(`/admin/products/new?error=${encodeURIComponent(error)}`);
 
   const concernSlugs = formData.getAll("concerns").filter((value): value is string => typeof value === "string");
   const imageUrl = readOptional(formData, "imageUrl");
+  let uploadedUrls: string[] = [];
 
   try {
+    uploadedUrls = await saveProductImages(formData);
+    const mediaUrls = [...uploadedUrls, ...(imageUrl ? [imageUrl] : [])];
     const concerns = await prisma.concern.findMany({ where: { slug: { in: concernSlugs } }, select: { id: true } });
     await prisma.product.create({
       data: {
         ...data,
-        media: imageUrl ? { create: { url: imageUrl, alt: `تصویر ${data.title}`, sortOrder: 0 } } : undefined,
+        media: mediaUrls.length ? { create: mediaUrls.map((url, sortOrder) => ({ url, alt: `تصویر ${data.title}`, sortOrder })) } : undefined,
         concerns: { create: concerns.map((concern) => ({ concernId: concern.id, strength: 1 })) }
       }
     });
-  } catch {
-    redirect("/admin/products/new?error=اسلاگ محصول تکراری است یا اطلاعات واردشده معتبر نیست.");
+  } catch (caught) {
+    await removeManagedProductImages(uploadedUrls);
+    const message = caught instanceof Error && (caught.message.includes("مگابایت") || caught.message.includes("فرمت") || caught.message.includes("حداکثر"))
+      ? caught.message
+      : "اسلاگ محصول تکراری است یا اطلاعات واردشده معتبر نیست.";
+    redirect(`/admin/products/new?error=${encodeURIComponent(message)}`);
   }
 
   revalidatePath("/admin");
@@ -91,14 +101,23 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  await requireAdmin();
   const data = productData(formData);
   const error = validateProduct(data);
   if (error) redirect(`/admin/products/${id}/edit?error=${encodeURIComponent(error)}`);
 
   const concernSlugs = formData.getAll("concerns").filter((value): value is string => typeof value === "string");
   const imageUrl = readOptional(formData, "imageUrl");
+  const existingUrls = formData.getAll("existingMedia").filter((value): value is string => typeof value === "string");
+  const removedUrls = new Set(formData.getAll("removeMedia").filter((value): value is string => typeof value === "string"));
+  const keptUrls = existingUrls.filter((url) => !removedUrls.has(url));
+  let uploadedUrls: string[] = [];
 
   try {
+    uploadedUrls = await saveProductImages(formData);
+    const allMediaUrls = Array.from(new Set([...keptUrls, ...uploadedUrls, ...(imageUrl ? [imageUrl] : [])]));
+    if (allMediaUrls.length > 6) throw new Error("گالری هر محصول حداکثر می‌تواند ۶ تصویر داشته باشد.");
+    const mediaUrls = allMediaUrls;
     const concerns = await prisma.concern.findMany({ where: { slug: { in: concernSlugs } }, select: { id: true } });
     await prisma.$transaction(async (tx) => {
       await tx.productConcern.deleteMany({ where: { productId: id } });
@@ -107,14 +126,20 @@ export async function updateProduct(id: string, formData: FormData) {
         where: { id },
         data: {
           ...data,
-          media: imageUrl ? { create: { url: imageUrl, alt: `تصویر ${data.title}`, sortOrder: 0 } } : undefined,
+          media: mediaUrls.length ? { create: mediaUrls.map((url, sortOrder) => ({ url, alt: `تصویر ${data.title}`, sortOrder })) } : undefined,
           concerns: { create: concerns.map((concern) => ({ concernId: concern.id, strength: 1 })) }
         }
       });
     });
-  } catch {
-    redirect(`/admin/products/${id}/edit?error=ذخیره انجام نشد؛ اسلاگ یا اطلاعات محصول را بررسی کن.`);
+  } catch (caught) {
+    await removeManagedProductImages(uploadedUrls);
+    const message = caught instanceof Error && (caught.message.includes("مگابایت") || caught.message.includes("فرمت") || caught.message.includes("حداکثر"))
+      ? caught.message
+      : "ذخیره انجام نشد؛ اسلاگ یا اطلاعات محصول را بررسی کن.";
+    redirect(`/admin/products/${id}/edit?error=${encodeURIComponent(message)}`);
   }
+
+  await removeManagedProductImages(Array.from(removedUrls));
 
   revalidatePath("/admin/products");
   revalidatePath(`/products/${data.slug}`);
@@ -123,6 +148,7 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function archiveProduct(formData: FormData) {
+  await requireAdmin();
   const id = readText(formData, "id");
   if (id) await prisma.product.update({ where: { id }, data: { status: ProductStatus.ARCHIVED } });
   revalidatePath("/admin");

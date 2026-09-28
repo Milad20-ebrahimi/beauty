@@ -1,7 +1,8 @@
+import Image from "next/image";
 import type { Brand, Category, Concern, Product } from "@prisma/client";
 
 type ProductWithRelations = Product & {
-  media: { url: string }[];
+  media: { id: string; url: string; alt?: string | null }[];
   concerns: { concernId: string }[];
 };
 
@@ -63,8 +64,16 @@ export function ProductForm({
       </section>
 
       <section className="admin-form-section">
-        <div className="admin-form-heading"><span>۴</span><div><h2>تصویر و ویژگی‌ها</h2><p>فعلاً آدرس تصویر را وارد کن؛ آپلود مستقیم در مرحله رسانه اضافه می‌شود.</p></div></div>
-        <label className="field-block"><span>آدرس تصویر</span><input name="imageUrl" dir="ltr" defaultValue={product?.media[0]?.url || ""} placeholder="/products/product-name.webp" /></label>
+        <div className="admin-form-heading"><span>۴</span><div><h2>گالری و ویژگی‌ها</h2><p>تا ۶ تصویر JPG، PNG یا WebP؛ هر فایل حداکثر ۵ مگابایت.</p></div></div>
+        {product?.media.length ? <div className="admin-media-gallery">
+          {product.media.map((media, index) => <label key={media.id} className="admin-media-item">
+            <input type="hidden" name="existingMedia" value={media.url} />
+            <Image src={media.url} alt={media.alt || product.title} width={180} height={180} />
+            <span>{index === 0 ? "تصویر اصلی" : `تصویر ${index + 1}`}</span>
+            <em><input type="checkbox" name="removeMedia" value={media.url} /> حذف از گالری</em>
+          </label>)}
+        </div> : null}
+        <label className="admin-upload-zone"><span>انتخاب تصاویر از کامپیوتر</span><input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple /><small>تصویر اول به‌عنوان تصویر اصلی محصول نمایش داده می‌شود.</small></label>
         <div className="admin-check-grid">
           <label><input type="checkbox" name="fragranceFree" defaultChecked={product?.fragranceFree === true} /> بدون عطر</label>
           <label><input type="checkbox" name="alcoholFree" defaultChecked={product?.alcoholFree === true} /> بدون الکل</label>

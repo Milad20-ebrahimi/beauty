@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 function text(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -28,6 +29,7 @@ async function createsCycle(categoryId: string, parentId: string | null) {
 }
 
 export async function createCategory(formData: FormData) {
+  await requireAdmin();
   const title = text(formData, "title");
   const categorySlug = slug(text(formData, "slug"));
   const parentId = text(formData, "parentId") || null;
@@ -43,6 +45,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+  await requireAdmin();
   const title = text(formData, "title");
   const categorySlug = slug(text(formData, "slug"));
   const parentId = text(formData, "parentId") || null;
@@ -59,6 +62,7 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(formData: FormData) {
+  await requireAdmin();
   const id = text(formData, "id");
   if (!id) return;
   const [productCount, childCount] = await Promise.all([

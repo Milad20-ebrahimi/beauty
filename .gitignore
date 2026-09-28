@@ -8,3 +8,5 @@ coverage
 *.log
 *.tsbuildinfo
 prisma/dev.db
+public/uploads/products/*
+!public/uploads/products/.gitkeep

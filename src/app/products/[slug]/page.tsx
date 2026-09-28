@@ -95,7 +95,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="product-detail-hero">
         <div className="product-gallery">
           {image ? (
-            <Image src={image.url} alt={image.alt || product.title} width={900} height={900} priority className="detail-product-image" />
+            <>
+              <Image src={image.url} alt={image.alt || product.title} width={900} height={900} priority className="detail-product-image" />
+              {product.media.length > 1 ? <div className="detail-gallery-strip">{product.media.slice(1).map((media) => <Image key={media.id} src={media.url} alt={media.alt || product.title} width={180} height={180} />)}</div> : null}
+            </>
           ) : (
             <div className="detail-image-empty">تصویر محصول به‌زودی اضافه می‌شود</div>
           )}
