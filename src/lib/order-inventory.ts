@@ -1,7 +1,8 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { createCustomerNotification } from "@/lib/notifications";
 
 export const ORDER_HOLD_HOURS = 24;
 
@@ -30,6 +31,7 @@ export async function releaseOrderReservation(orderId: string, note: string) {
       await tx.inventoryMovement.create({ data: { productId: item.productId, orderId, type: "RELEASE", reservedDelta: -released, note } });
     }
     await tx.order.update({ where: { id: orderId }, data: { status: "CANCELLED", inventoryFinalizedAt: new Date() } });
+    await createCustomerNotification(tx, { userId: order.userId, type: NotificationType.ORDER, title: "سفارش لغو شد", message: note === "انقضای مهلت پرداخت" ? "مهلت ۲۴ ساعته پرداخت تمام شد و موجودی رزروشده آزاد شد." : "سفارش لغو و موجودی رزروشده آزاد شد.", href: "/account", eventKey: `order-status-${order.id}-CANCELLED` });
     return true;
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }

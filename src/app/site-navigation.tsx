@@ -11,12 +11,13 @@ const links: SiteLink[] = [
   { href: "/recommendations", label: "پیشنهادهای من", short: "پیشنهادها", icon: "✦", mobileHidden: true },
   { href: "/routine", label: "روتین من", short: "روتین", icon: "☼" },
   { href: "/compare", label: "مقایسه", short: "مقایسه", icon: "⇄", mobileHidden: true },
+  { href: "/account/notifications", label: "اعلان‌ها", short: "اعلان", icon: "◉", mobileHidden: true },
   { href: "/cart", label: "سبد خرید", short: "سبد", icon: "▣" },
   { href: "/passport", label: "Beauty Passport", short: "پروفایل", icon: "◎", mobileHidden: true },
   { href: "/account", label: "حساب من", short: "حساب", icon: "●" }
 ];
 
-export function SiteNavigation({ cartCount = 0 }: { cartCount?: number }) {
+export function SiteNavigation({ cartCount = 0, notificationCount = 0 }: { cartCount?: number; notificationCount?: number }) {
   const pathname = usePathname();
 
   return (
@@ -29,6 +30,7 @@ export function SiteNavigation({ cartCount = 0 }: { cartCount?: number }) {
             <span className="nav-label">{link.label}</span>
             <span className="nav-short">{link.short}</span>
             {link.href === "/cart" && cartCount > 0 ? <span className="nav-cart-count">{new Intl.NumberFormat("fa-IR").format(cartCount)}</span> : null}
+            {link.href === "/account" && notificationCount > 0 ? <span className="nav-notification-count">{new Intl.NumberFormat("fa-IR").format(notificationCount)}</span> : null}
           </a>
         );
       })}

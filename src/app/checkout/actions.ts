@@ -2,10 +2,11 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Prisma } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CART_COOKIE } from "@/lib/cart";
 import { DISCOUNT_COOKIE, resolveDiscount } from "@/lib/discount";
+import { createCustomerNotification } from "@/lib/notifications";
 
 const toEnglishDigits = (value: string) => value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 const cleanText = (value: string) => value.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/\s+/g, " ").trim();
@@ -97,6 +98,7 @@ export async function placeOrder(formData: FormData) {
         await tx.product.update({ where: { id: item.productId }, data: { reservedStock: { increment: item.quantity } } });
         await tx.inventoryMovement.create({ data: { productId: item.productId, orderId: createdOrder.id, type: "RESERVATION", reservedDelta: item.quantity, note: "رزرو موجودی هنگام ثبت سفارش" } });
       }
+      await createCustomerNotification(tx, { userId: user.id, type: NotificationType.ORDER, title: "سفارش ثبت شد", message: `سفارش ${createdOrder.id.slice(-8)} ثبت شد و تا ۲۴ ساعت منتظر پرداخت است.`, href: `/payment/${createdOrder.id}`, eventKey: `order-created-${createdOrder.id}` });
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       return createdOrder;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

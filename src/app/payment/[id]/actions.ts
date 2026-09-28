@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { removePaymentReceipt, savePaymentReceipt } from "@/lib/payment-receipt";
 import { expireStaleOrders } from "@/lib/order-inventory";
+import { NotificationType } from "@prisma/client";
+import { createCustomerNotification } from "@/lib/notifications";
 
 export async function submitPaymentReceipt(orderId: string, formData: FormData) {
   await expireStaleOrders();
@@ -18,10 +20,13 @@ export async function submitPaymentReceipt(orderId: string, formData: FormData) 
   try { imageUrl = await savePaymentReceipt(file); }
   catch (error) { redirect(`/payment/${orderId}?error=${encodeURIComponent(error instanceof Error ? error.message : "فایل معتبر نیست.")}`); }
   const oldUrl = order.paymentReceipt?.imageUrl;
-  await prisma.paymentReceipt.upsert({
-    where: { orderId },
-    update: { imageUrl, status: "PENDING", customerNote: String(formData.get("customerNote") || "").trim() || null, adminNote: null, reviewedAt: null },
-    create: { orderId, imageUrl, customerNote: String(formData.get("customerNote") || "").trim() || null }
+  await prisma.$transaction(async (tx) => {
+    await tx.paymentReceipt.upsert({
+      where: { orderId },
+      update: { imageUrl, status: "PENDING", customerNote: String(formData.get("customerNote") || "").trim() || null, adminNote: null, reviewedAt: null },
+      create: { orderId, imageUrl, customerNote: String(formData.get("customerNote") || "").trim() || null }
+    });
+    await createCustomerNotification(tx, { userId: order.userId, type: NotificationType.PAYMENT, title: "رسید دریافت شد", message: "تصویر رسید شما دریافت شد و اکنون منتظر بررسی مدیر است.", href: `/payment/${orderId}` });
   });
   if (oldUrl && oldUrl !== imageUrl) await removePaymentReceipt(oldUrl);
   revalidatePath(`/payment/${orderId}`);

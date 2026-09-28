@@ -102,6 +102,14 @@ enum DiscountType {
   FIXED
 }
 
+enum NotificationType {
+  ORDER
+  PAYMENT
+  SHIPPING
+  REVIEW
+  SYSTEM
+}
+
 model User {
   id             String          @id @default(cuid())
   phone          String?         @unique
@@ -117,6 +125,7 @@ model User {
   analytics      AnalyticsEvent[]
   discountUsages DiscountUsage[]
   favorites      Favorite[]
+  notifications  Notification[]
 }
 
 model CustomerOtp {
@@ -402,6 +411,21 @@ model Favorite {
 
   @@unique([userId, productId])
   @@index([userId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  message   String
+  href      String?
+  eventKey  String?          @unique
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
 }
 
 model Order {
