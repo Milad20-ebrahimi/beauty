@@ -27,6 +27,7 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
       { href: "/admin/orders", icon: "#", title: "سفارش‌ها", description: "پرداخت، آماده‌سازی و ارسال" },
       { href: "/admin/payment-settings", icon: "$", title: "تنظیمات پرداخت", description: "شماره کارت و راهنمای مشتری" },
       { href: "/admin/shipping", icon: "↗", title: "روش‌های ارسال", description: "هزینه و زمان تحویل" },
+      { href: "/admin/discounts", icon: "%", title: "کدهای تخفیف", description: "کمپین، ظرفیت و محدودیت مصرف" },
       { href: "/admin/reviews", icon: "★", title: "نظرات مشتریان", description: "بررسی و انتشار تجربه‌ها" }
     ]
   },
@@ -60,8 +61,8 @@ export function AdminNavigation() {
         </div>
       ))}
       <div className="admin-roadmap">
-        <strong>مراحل بعدی فروشگاه</strong>
-        <p>پرداخت، حساب مشتری و نظرات تأییدشده در مراحل بعد اضافه می‌شوند.</p>
+        <strong>فروشگاه آماده‌تر شده</strong>
+        <p>سفارش، پرداخت، ارسال، حساب مشتری، نظر و تخفیف از همین منو مدیریت می‌شوند.</p>
       </div>
     </nav>
   );

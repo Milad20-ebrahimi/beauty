@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CART_COOKIE } from "@/lib/cart";
+import { DISCOUNT_COOKIE, resolveDiscount } from "@/lib/discount";
 import { placeOrder } from "./actions";
 import { ShippingSelector } from "./shipping-selector";
 
@@ -15,15 +16,26 @@ const validationMessages: Record<string, string> = {
   city: "نام شهر را وارد کن.",
   address: "آدرس خیلی کوتاه است؛ خیابان، کوچه، پلاک و واحد را بنویس.",
   postal: "کد پستی باید دقیقاً ۱۰ رقم باشد؛ اگر در دسترس نیست می‌توانی آن را خالی بگذاری.",
-  shipping: "یک روش ارسال فعال انتخاب کن."
+  shipping: "یک روش ارسال فعال انتخاب کن.",
+  discount_invalid: "کد تخفیف دیگر معتبر یا فعال نیست؛ به سبد برگرد و کد را بررسی کن.",
+  discount_expired: "مهلت کد تخفیف تمام شده است؛ به سبد برگرد و کد را حذف کن.",
+  discount_limit: "ظرفیت استفاده از کد تخفیف تمام شده است.",
+  discount_customer_limit: "سقف استفاده شما از این کد تخفیف تمام شده است.",
+  discount_minimum: "مبلغ سفارش دیگر به حداقل لازم برای این کد نمی‌رسد.",
+  discount_scope: "کد تخفیف برای محصولات فعلی سبد قابل استفاده نیست.",
+  discount_not_started: "زمان استفاده از این کد هنوز شروع نشده است."
 };
 
 export default async function CheckoutPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
-  const sessionId = (await cookies()).get(CART_COOKIE)?.value;
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get(CART_COOKIE)?.value;
+  const discountCode = cookieStore.get(DISCOUNT_COOKIE)?.value;
   const [cart, shippingMethods] = await Promise.all([sessionId ? prisma.cart.findFirst({ where: { sessionId }, include: { items: { include: { product: { include: { media: { take: 1, orderBy: { sortOrder: "asc" } } } } } } } }) : null, prisma.shippingMethod.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] })]);
   if (!cart?.items.length) redirect("/cart");
   const subtotal = cart.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const discountResult = discountCode ? await resolveDiscount(prisma, discountCode, cart.items.map((item) => ({ productId: item.product.id, categoryId: item.product.categoryId, price: item.product.price, quantity: item.quantity }))) : null;
+  const discountAmount = discountResult?.ok ? discountResult.amount : 0;
 
   return <main className="home-shell checkout-page">
     <section className="compact-hero results-header"><div className="hero-content"><p className="eyebrow">تسویه‌حساب · مرحله ۱</p><h1>اطلاعات تحویل سفارش</h1><p className="hero-copy">اطلاعات را دقیق وارد کن. بعد از ثبت، سفارش برای پرداخت آماده می‌شود.</p></div></section>
@@ -37,7 +49,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
         <div className="checkout-form-note"><strong>بعد از ثبت چه می‌شود؟</strong><p>محصول‌ها برای این سفارش رزرو می‌شوند و در مرحله بعد روش پرداخت و بارگذاری رسید را اضافه می‌کنیم.</p></div>
         <button type="submit" className="primary-action" disabled={!shippingMethods.length}>ثبت سفارش و ادامه</button>
       </form>
-      <aside className="checkout-summary"><p className="admin-kicker">خلاصه خرید</p><h2>{formatPrice(cart.items.reduce((sum, item) => sum + item.quantity, 0))} کالا</h2><div className="checkout-products">{cart.items.map((item) => <div key={item.id}>{item.product.media[0] ? <Image src={item.product.media[0].url} alt={item.product.title} width={48} height={48} /> : <span /> }<p><strong>{item.product.title}</strong><small>{item.quantity} عدد</small></p><b>{formatPrice(item.product.price * item.quantity)}</b></div>)}</div><div className="cart-total"><span>جمع محصولات</span><strong>{formatPrice(subtotal)} تومان</strong></div><small className="muted">هزینه ارسال براساس انتخاب تو به مبلغ نهایی اضافه می‌شود.</small><a href="/cart" className="secondary-action">بازگشت و ویرایش سبد</a></aside>
+      <aside className="checkout-summary"><p className="admin-kicker">خلاصه خرید</p><h2>{formatPrice(cart.items.reduce((sum, item) => sum + item.quantity, 0))} کالا</h2><div className="checkout-products">{cart.items.map((item) => <div key={item.id}>{item.product.media[0] ? <Image src={item.product.media[0].url} alt={item.product.title} width={48} height={48} /> : <span /> }<p><strong>{item.product.title}</strong><small>{item.quantity} عدد</small></p><b>{formatPrice(item.product.price * item.quantity)}</b></div>)}</div><dl className="checkout-price-lines"><div><dt>جمع محصولات</dt><dd>{formatPrice(subtotal)} تومان</dd></div>{discountAmount ? <div className="discount-line"><dt>تخفیف {discountCode}</dt><dd>− {formatPrice(discountAmount)} تومان</dd></div> : null}</dl><div className="cart-total"><span>پس از تخفیف</span><strong>{formatPrice(Math.max(0, subtotal - discountAmount))} تومان</strong></div><small className="muted">هزینه ارسال براساس انتخاب تو به مبلغ نهایی اضافه می‌شود.</small><a href="/cart" className="secondary-action">بازگشت و ویرایش سبد</a></aside>
     </div>
   </main>;
 }

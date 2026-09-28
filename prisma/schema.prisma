@@ -97,6 +97,11 @@ enum InventoryMovementType {
   RETURN
 }
 
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
 model User {
   id             String          @id @default(cuid())
   phone          String?         @unique
@@ -110,6 +115,7 @@ model User {
   carts          Cart[]
   orders         Order[]
   analytics      AnalyticsEvent[]
+  discountUsages DiscountUsage[]
 }
 
 model CustomerOtp {
@@ -199,6 +205,7 @@ model Category {
   parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryTree")
   products  Product[]
+  discountCodes DiscountCode[]
 }
 
 model Product {
@@ -234,6 +241,7 @@ model Product {
   orderItems          OrderItem[]
   matchScores         MatchScoreSnapshot[]
   inventoryMovements  InventoryMovement[]
+  discountCodes       DiscountCode[]
 
   @@index([brandId])
   @@index([categoryId])
@@ -388,6 +396,8 @@ model Order {
   status      OrderStatus @default(DRAFT)
   subtotal    Int
   discount    Int         @default(0)
+  discountCodeId String?
+  discountCodeText String?
   shippingFee Int         @default(0)
   shippingMethodId String?
   shippingMethodTitle String?
@@ -403,10 +413,55 @@ model Order {
   paymentReceipt PaymentReceipt?
   inventoryMovements InventoryMovement[]
   shippingMethod ShippingMethod? @relation(fields: [shippingMethodId], references: [id], onDelete: SetNull)
+  discountCode DiscountCode? @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
+  discountUsage DiscountUsage?
 
   @@index([userId])
   @@index([status])
   @@index([shippingMethodId])
+  @@index([discountCodeId])
+}
+
+model DiscountCode {
+  id               String       @id @default(cuid())
+  code             String       @unique
+  title            String
+  type             DiscountType
+  value            Int
+  minimumSubtotal  Int          @default(0)
+  maximumDiscount  Int?
+  usageLimit       Int?
+  perCustomerLimit Int          @default(1)
+  startsAt         DateTime?
+  expiresAt        DateTime?
+  active           Boolean      @default(true)
+  productId        String?
+  categoryId       String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  product          Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  category         Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orders           Order[]
+  usages           DiscountUsage[]
+
+  @@index([active, startsAt, expiresAt])
+  @@index([productId])
+  @@index([categoryId])
+}
+
+model DiscountUsage {
+  id             String       @id @default(cuid())
+  discountCodeId String
+  orderId        String       @unique
+  userId         String?
+  amount         Int
+  createdAt      DateTime     @default(now())
+  discountCode   DiscountCode @relation(fields: [discountCodeId], references: [id], onDelete: Restrict)
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([discountCodeId, createdAt])
+  @@index([userId, discountCodeId])
 }
 
 model ShippingMethod {

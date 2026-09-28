@@ -583,6 +583,36 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .shipping-live-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 7px; background: var(--ink); padding: 13px; color: #fff; }
 .shipping-live-total span { color: #bdc8c3; font-size: 9px; }
 .shipping-live-total strong { font-size: 16px; }
+.discount-box { display: grid; gap: 8px; border: 1px dashed #9db6ad; border-radius: 7px; background: var(--brand-soft); padding: 12px; }
+.discount-box > strong { color: var(--brand-dark); font-size: 10px; }
+.discount-box > span { color: var(--muted); font-size: 9px; }
+.discount-box > span b { color: var(--brand-dark); }
+.discount-box form { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.discount-box input { min-width: 0; border: 1px solid var(--line); border-radius: 6px; outline: none; background: #fff; padding: 9px; font: inherit; font-size: 10px; text-transform: uppercase; }
+.discount-box button { border: 0; border-radius: 6px; background: var(--brand); padding: 8px 11px; color: #fff; font: inherit; font-size: 9px; font-weight: 900; cursor: pointer; }
+.discount-line dd { color: var(--brand) !important; font-weight: 900; }
+.checkout-price-lines { display: grid; gap: 8px; margin: 0; }
+.checkout-price-lines > div { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 10px; }
+.checkout-price-lines dd { margin: 0; color: var(--ink); }
+.discount-admin-layout { display: grid; grid-template-columns: 390px minmax(0,1fr); align-items: start; gap: 14px; margin-top: 14px; }
+.discount-create { position: sticky; top: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 20px; }
+.discount-form .primary-action { width: 100%; border: 0; }
+.discount-code-list { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.discount-code-list > article { position: relative; border-bottom: 1px solid var(--line); padding: 18px; }
+.discount-code-list > article:last-child { border-bottom: 0; }
+.discount-code-list > article > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.discount-code-list > article > header > div { display: flex; align-items: center; gap: 8px; }
+.discount-code-list > article > header strong { font-size: 13px; letter-spacing: .08em; }
+.discount-code-list > article > header small { color: var(--muted); font-size: 9px; }
+.discount-code-summary { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; margin: 14px 0; border-radius: 7px; background: var(--canvas); padding: 12px; }
+.discount-code-summary b { font-size: 11px; }
+.discount-code-summary span { color: var(--brand); font-size: 12px; font-weight: 900; }
+.discount-code-summary small { grid-column: 1 / -1; color: var(--muted); font-size: 9px; }
+.discount-code-list details { border-top: 1px solid var(--line); padding-top: 12px; }
+.discount-code-list summary { color: var(--brand); font-size: 10px; font-weight: 900; cursor: pointer; }
+.discount-code-list details .discount-form { margin-top: 14px; }
+.discount-delete { position: absolute; left: 18px; bottom: 18px; }
+.discount-delete button { border: 0; background: transparent; color: var(--coral); font: inherit; font-size: 8px; cursor: pointer; }
 .admin-alert { margin-bottom: 16px; border-radius: 7px; padding: 13px 15px; font-size: 13px; font-weight: 700; }
 .admin-alert.success { border: 1px solid #add3c1; background: var(--brand-soft); color: var(--brand-dark); }
 .admin-alert.error { border: 1px solid #efc1b8; background: var(--coral-soft); color: #8f3828; }
@@ -808,6 +838,8 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .customer-login-page > aside { display: none; }
   .shipping-admin-layout { grid-template-columns: 1fr; }
   .shipping-create { position: static; }
+  .discount-admin-layout { grid-template-columns: 1fr; }
+  .discount-create { position: static; }
 }
 
 @media (max-width: 640px) {
@@ -918,6 +950,7 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .shipping-delete { position: static; margin-top: 8px; }
   .shipping-choice-list label { grid-template-columns: 19px 1fr; }
   .shipping-choice-list b { grid-column: 2; }
+  .discount-delete { position: static; margin-top: 10px; }
   .review-create-layout { grid-template-columns: 1fr; }
   .review-create-layout > aside { position: static; }
   .review-form-grid, .review-question-grid { grid-template-columns: 1fr; }
