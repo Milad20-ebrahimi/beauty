@@ -10,6 +10,7 @@ const links: SiteLink[] = [
   { href: "/needs", label: "انتخاب براساس نیاز", short: "نیازها", icon: "◇", mobileHidden: true },
   { href: "/recommendations", label: "پیشنهادهای من", short: "پیشنهادها", icon: "✦", mobileHidden: true },
   { href: "/routine", label: "روتین من", short: "روتین", icon: "☼" },
+  { href: "/compare", label: "مقایسه", short: "مقایسه", icon: "⇄", mobileHidden: true },
   { href: "/cart", label: "سبد خرید", short: "سبد", icon: "▣" },
   { href: "/passport", label: "Beauty Passport", short: "پروفایل", icon: "◎", mobileHidden: true },
   { href: "/account", label: "حساب من", short: "حساب", icon: "●" }

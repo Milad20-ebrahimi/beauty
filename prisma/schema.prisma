@@ -116,6 +116,7 @@ model User {
   orders         Order[]
   analytics      AnalyticsEvent[]
   discountUsages DiscountUsage[]
+  favorites      Favorite[]
 }
 
 model CustomerOtp {
@@ -242,6 +243,7 @@ model Product {
   matchScores         MatchScoreSnapshot[]
   inventoryMovements  InventoryMovement[]
   discountCodes       DiscountCode[]
+  favorites           Favorite[]
 
   @@index([brandId])
   @@index([categoryId])
@@ -388,6 +390,18 @@ model CartItem {
   product   Product  @relation(fields: [productId], references: [id])
 
   @@unique([cartId, productId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
 }
 
 model Order {

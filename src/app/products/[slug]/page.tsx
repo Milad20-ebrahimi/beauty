@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { calculateMatchScore, getSimilarReviewSignal, type MatchProfile } from "@/features/recommendation/match-score";
 import { addToCart } from "@/app/cart/actions";
+import { getCustomerUser } from "@/lib/auth";
+import { toggleCompare, toggleFavorite } from "../product-actions";
+import { COMPARE_COOKIE } from "@/lib/compare";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +33,12 @@ function toPersianNumber(value: number) {
   return new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 1 }).format(value);
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProductPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { slug } = await params;
+  const query = await searchParams;
   const cookieStore = await cookies();
   const profileId = cookieStore.get("beauty_profile_id")?.value;
+  const customer = await getCustomerUser();
 
   const [product, savedProfile] = await Promise.all([
     prisma.product.findFirst({
@@ -57,6 +62,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   ]);
 
   if (!product) notFound();
+  const isFavorite = customer ? Boolean(await prisma.favorite.findUnique({ where: { userId_productId: { userId: customer.id, productId: product.id } }, select: { id: true } })) : false;
+  const isCompared = (cookieStore.get(COMPARE_COOKIE)?.value || "").split(",").includes(product.id);
 
   const activeProfile: MatchProfile | null = savedProfile
     ? {
@@ -96,6 +103,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <main className="home-shell product-detail-shell">
+      {query.favoriteAdded ? <div className="cart-message success">محصول به علاقه‌مندی‌ها اضافه شد.</div> : null}{query.favoriteRemoved ? <div className="cart-message">محصول از علاقه‌مندی‌ها حذف شد.</div> : null}{query.compareAdded ? <div className="cart-message success">محصول به مقایسه اضافه شد. <a href="/compare">مشاهده مقایسه</a></div> : null}{query.compareRemoved ? <div className="cart-message">محصول از مقایسه حذف شد.</div> : null}{query.compareError ? <div className="cart-message error">حداکثر ۴ محصول را می‌توانی مقایسه کنی.</div> : null}
       <nav className="breadcrumb" aria-label="مسیر صفحه">
         <a href="/">خانه</a><span>/</span><a href="/recommendations">پیشنهادها</a><span>/</span><span>{product.title}</span>
       </nav>
@@ -142,6 +150,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <input type="hidden" name="productId" value={product.id} />
             <button type="submit" className="primary-action detail-cta" disabled={availableStock === 0}>افزودن به سبد خرید</button>
           </form>
+          <div className="detail-save-actions"><form action={toggleFavorite}><input type="hidden" name="productId" value={product.id} /><input type="hidden" name="returnTo" value={`/products/${product.slug}`} /><button className={isFavorite ? "selected" : ""}>{isFavorite ? "♥ ذخیره‌شده در علاقه‌مندی‌ها" : "♡ ذخیره برای بعد"}</button></form><form action={toggleCompare}><input type="hidden" name="productId" value={product.id} /><input type="hidden" name="returnTo" value={`/products/${product.slug}`} /><button className={isCompared ? "selected" : ""}>{isCompared ? "✓ در مقایسه" : "⇄ افزودن به مقایسه"}</button></form></div>
           <p className="cta-note">افزودن به سبد موجودی را کم نمی‌کند؛ موجودی هنگام ثبت سفارش دوباره بررسی می‌شود.</p>
         </div>
       </section>
