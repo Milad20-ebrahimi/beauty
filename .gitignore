@@ -10,3 +10,5 @@ coverage
 prisma/dev.db
 public/uploads/products/*
 !public/uploads/products/.gitkeep
+public/uploads/receipts/*
+!public/uploads/receipts/.gitkeep

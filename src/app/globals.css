@@ -427,6 +427,50 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .admin-order-card > footer select { min-width: 170px; border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 8px; font: inherit; font-size: 10px; }
 .admin-order-card > footer button { min-height: 34px; border: 0; padding: 7px 12px; font-size: 9px; }
 .admin-order-card > footer small { color: var(--warning); font-size: 9px; }
+.admin-receipt { display: grid; grid-template-columns: 110px minmax(160px,.7fr) minmax(280px,1.3fr); align-items: center; gap: 15px; border-top: 1px solid var(--line); background: var(--brand-soft); padding: 15px 18px; }
+.admin-receipt img { width: 110px; height: 110px; border-radius: 7px; object-fit: cover; }
+.admin-receipt h3, .admin-receipt p { margin: 0; }
+.admin-receipt h3 { font-size: 11px; }
+.admin-receipt > div > strong { display: block; margin-top: 5px; color: var(--brand); font-size: 10px; }
+.admin-receipt p { margin-top: 6px; color: var(--muted); font-size: 9px; }
+.admin-receipt form { display: grid; gap: 8px; }
+.admin-receipt form label { display: grid; gap: 4px; color: var(--muted); font-size: 8px; }
+.admin-receipt form input { border: 1px solid #b7d2c6; border-radius: 6px; background: #fff; padding: 8px; font: inherit; font-size: 10px; }
+.admin-receipt form > div { display: flex; justify-content: flex-end; gap: 6px; }
+.admin-receipt button { border: 0; border-radius: 6px; padding: 8px 11px; color: #fff; font: inherit; font-size: 9px; font-weight: 900; cursor: pointer; }
+.receipt-approve { background: var(--brand); }
+.receipt-reject { background: var(--coral); }
+.receipt-admin-note { grid-column: 3; }
+.admin-no-receipt { border-top: 1px solid var(--line); background: #fafbf9; padding: 11px 18px; color: var(--muted); font-size: 9px; }
+.payment-active { display: flex !important; align-items: center; grid-column: 1 / -1; grid-template: none !important; gap: 8px !important; border: 1px solid var(--line); border-radius: 7px; background: var(--brand-soft); padding: 12px; }
+.payment-active input { width: 18px !important; height: 18px; accent-color: var(--brand); }
+
+.payment-page { display: grid; gap: 20px; }
+.payment-layout { display: grid; grid-template-columns: minmax(320px,.78fr) minmax(0,1.22fr); gap: 17px; align-items: start; }
+.payment-card, .receipt-panel { border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 24px; }
+.payment-card { display: grid; justify-items: center; gap: 17px; background: linear-gradient(145deg,#193d32,#0f2921); color: #fff; text-align: center; }
+.payment-card > p { margin: 0; color: #b7cbc3; font-size: 11px; }
+.payment-card > strong { font-size: 30px; }
+.payment-card > strong small { color: #b7cbc3; font-size: 10px; }
+.bank-details { width: 100%; display: grid; grid-template-columns: 90px 1fr; gap: 8px 12px; border-block: 1px solid #40584f; padding: 17px 0; text-align: right; }
+.bank-details span { color: #9eb3aa; font-size: 9px; }
+.bank-details b { overflow-wrap: anywhere; font-size: 13px; }
+.payment-instructions { border-radius: 6px; background: rgba(255,255,255,.07); padding: 11px; line-height: 1.8; }
+.payment-card .order-reference { border-color: #40584f; background: rgba(255,255,255,.04); }
+.receipt-panel { display: grid; gap: 17px; }
+.receipt-panel h2, .receipt-panel p { margin: 0; }
+.receipt-panel h2 { margin: 5px 0; font-size: 21px; }
+.receipt-panel > div > p:not(.admin-kicker) { color: var(--muted); font-size: 10px; }
+.receipt-panel form { display: grid; gap: 13px; }
+.receipt-panel form > label:not(.admin-upload-zone) { display: grid; gap: 6px; font-size: 10px; font-weight: 800; }
+.receipt-panel textarea { border: 1px solid var(--line); border-radius: 7px; padding: 10px; font: inherit; resize: vertical; }
+.receipt-panel form > button { width: 100%; border: 0; }
+.receipt-status { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.receipt-status > span { width: fit-content; border-radius: 99px; background: var(--warning-soft); padding: 6px 9px; color: var(--warning); font-size: 9px; font-weight: 900; }
+.receipt-status.approved > span { background: var(--brand-soft); color: var(--brand); }
+.receipt-status.rejected > span { background: var(--coral-soft); color: #8f3828; }
+.receipt-status img { width: 100%; max-height: 360px; border-radius: 7px; object-fit: contain; background: var(--canvas); }
+.receipt-status p { border-right: 3px solid var(--coral); background: var(--coral-soft); padding: 10px; color: #8f3828 !important; }
 .admin-alert { margin-bottom: 16px; border-radius: 7px; padding: 13px 15px; font-size: 13px; font-weight: 700; }
 .admin-alert.success { border: 1px solid #add3c1; background: var(--brand-soft); color: var(--brand-dark); }
 .admin-alert.error { border: 1px solid #efc1b8; background: var(--coral-soft); color: #8f3828; }
@@ -591,6 +635,10 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .checkout-layout { grid-template-columns: 1fr; }
   .checkout-summary { position: static; }
   .admin-order-body { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .payment-layout { grid-template-columns: 1fr; }
+  .admin-receipt { grid-template-columns: 90px 1fr; }
+  .admin-receipt img { width: 90px; height: 90px; }
+  .admin-receipt form, .receipt-admin-note { grid-column: 1 / -1; }
 }
 
 @media (max-width: 640px) {
@@ -680,4 +728,8 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .admin-order-card > header > div { flex-wrap: wrap; }
   .admin-order-card > footer form { align-items: stretch; flex-direction: column; }
   .admin-order-card > footer select { width: 100%; }
+  .payment-card, .receipt-panel { padding: 18px; }
+  .admin-receipt { grid-template-columns: 70px 1fr; padding: 12px; }
+  .admin-receipt img { width: 70px; height: 70px; }
+  .admin-receipt form > div { display: grid; grid-template-columns: 1fr 1fr; }
 }

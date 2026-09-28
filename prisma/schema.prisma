@@ -77,6 +77,12 @@ enum ReviewSource {
   IMPORTED
 }
 
+enum PaymentReceiptStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id             String          @id @default(cuid())
   phone          String?         @unique
@@ -356,9 +362,36 @@ model Order {
   user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   address     OrderAddress?
+  paymentReceipt PaymentReceipt?
 
   @@index([userId])
   @@index([status])
+}
+
+model PaymentReceipt {
+  id          String               @id @default(cuid())
+  orderId     String               @unique
+  imageUrl    String
+  status      PaymentReceiptStatus @default(PENDING)
+  customerNote String?
+  adminNote   String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  reviewedAt  DateTime?
+  order       Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+model ManualPaymentSettings {
+  id           String   @id @default("default")
+  cardNumber   String
+  iban         String?
+  holderName   String
+  bankName     String?
+  instructions String?
+  active       Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
 }
 
 model OrderAddress {

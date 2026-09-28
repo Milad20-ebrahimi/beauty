@@ -28,3 +28,20 @@ export async function updateOrderStatus(formData: FormData) {
   revalidatePath("/admin/orders");
   redirect("/admin/orders?updated=1");
 }
+
+export async function reviewPaymentReceipt(formData: FormData) {
+  await requireAdmin();
+  const receiptId = String(formData.get("receiptId") || "");
+  const decision = String(formData.get("decision") || "");
+  const adminNote = String(formData.get("adminNote") || "").trim();
+  if (!receiptId || !["approve", "reject"].includes(decision) || (decision === "reject" && adminNote.length < 3)) redirect("/admin/orders?error=receipt");
+  const receipt = await prisma.paymentReceipt.findUnique({ where: { id: receiptId }, include: { order: true } });
+  if (!receipt || receipt.status !== "PENDING" || receipt.order.status !== "PENDING_PAYMENT") redirect("/admin/orders?error=locked");
+  await prisma.$transaction([
+    prisma.paymentReceipt.update({ where: { id: receipt.id }, data: { status: decision === "approve" ? "APPROVED" : "REJECTED", adminNote: adminNote || null, reviewedAt: new Date() } }),
+    ...(decision === "approve" ? [prisma.order.update({ where: { id: receipt.orderId }, data: { status: "PAID" } })] : [])
+  ]);
+  revalidatePath("/admin/orders");
+  revalidatePath(`/payment/${receipt.orderId}`);
+  redirect(`/admin/orders?receipt=${decision}`);
+}
