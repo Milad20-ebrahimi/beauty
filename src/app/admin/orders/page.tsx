@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { reviewPaymentReceipt, updateOrderStatus } from "./actions";
+import { expireStaleOrders } from "@/lib/order-inventory";
 
 export const dynamic = "force-dynamic";
 const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price);
@@ -8,6 +9,7 @@ const statusLabels: Record<string, string> = { DRAFT: "پیش‌نویس", PENDI
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ updated?: string; error?: string; receipt?: string }> }) {
   const params = await searchParams;
+  await expireStaleOrders();
   const orders = await prisma.order.findMany({ include: { user: true, address: true, paymentReceipt: true, items: { include: { product: true } } }, orderBy: { createdAt: "desc" } });
   return <main className="admin-page">
     <header className="admin-page-header"><div><p className="admin-kicker">فروش و ارسال</p><h1>سفارش‌ها</h1><p>سفارش جدید را بررسی کن، وضعیت را تغییر بده و قبل از ارسال اطلاعات تحویل را بخوان.</p></div><a href="/" className="secondary-action">مشاهده فروشگاه</a></header>

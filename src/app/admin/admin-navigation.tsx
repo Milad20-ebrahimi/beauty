@@ -15,6 +15,7 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
     label: "کاتالوگ فروشگاه",
     links: [
       { href: "/admin/products", icon: "□", title: "محصولات", description: "قیمت، تصویر، موجودی و وضعیت" },
+      { href: "/admin/inventory", icon: "≡", title: "انبار و موجودی", description: "موجود، رزرو و تاریخچه تغییرات" },
       { href: "/admin/brands", icon: "B", title: "برندها", description: "سازنده و اطلاعات برند" },
       { href: "/admin/categories", icon: "⌘", title: "دسته‌بندی‌ها", description: "ساختار محصولات فروشگاه" },
       { href: "/admin/ingredients", icon: "+", title: "ترکیبات", description: "مواد مؤثره و توضیح کاربرد" }

@@ -110,6 +110,7 @@ export async function createProduct(formData: FormData) {
     await prisma.product.create({
       data: {
         ...data,
+        inventoryMovements: data.stock > 0 ? { create: { type: "ADJUSTMENT", stockDelta: data.stock, note: "موجودی اولیه محصول" } } : undefined,
         media: mediaUrls.length ? { create: mediaUrls.map((url, sortOrder) => ({ url, alt: `تصویر ${data.title}`, sortOrder })) } : undefined,
         ingredients: { create: relations.ingredientIds.map((ingredientId, position) => ({ ingredientId, position: position + 1 })) },
         skinSuitability: { create: relations.skinSuitability },
@@ -152,6 +153,8 @@ export async function updateProduct(id: string, formData: FormData) {
     const mediaUrls = allMediaUrls;
     const concerns = await prisma.concern.findMany({ where: { slug: { in: relations.concernSlugs } }, select: { id: true } });
     await prisma.$transaction(async (tx) => {
+      const previousProduct = await tx.product.findUniqueOrThrow({ where: { id }, select: { stock: true, reservedStock: true } });
+      if (data.stock < previousProduct.reservedStock) throw new Error("موجودی کل نمی‌تواند کمتر از موجودی رزروشده باشد.");
       await tx.productConcern.deleteMany({ where: { productId: id } });
       await tx.productMedia.deleteMany({ where: { productId: id } });
       await tx.productIngredient.deleteMany({ where: { productId: id } });
@@ -166,10 +169,12 @@ export async function updateProduct(id: string, formData: FormData) {
           concerns: { create: concerns.map((concern) => ({ concernId: concern.id, strength: 1 })) }
         }
       });
+      const stockDelta = data.stock - previousProduct.stock;
+      if (stockDelta !== 0) await tx.inventoryMovement.create({ data: { productId: id, type: "ADJUSTMENT", stockDelta, note: "تغییر موجودی از فرم محصول" } });
     });
   } catch (caught) {
     await removeManagedProductImages(uploadedUrls);
-    const message = caught instanceof Error && (caught.message.includes("مگابایت") || caught.message.includes("فرمت") || caught.message.includes("حداکثر"))
+    const message = caught instanceof Error && (caught.message.includes("مگابایت") || caught.message.includes("فرمت") || caught.message.includes("حداکثر") || caught.message.includes("رزروشده"))
       ? caught.message
       : "ذخیره انجام نشد؛ اسلاگ یا اطلاعات محصول را بررسی کن.";
     redirect(`/admin/products/${id}/edit?error=${encodeURIComponent(message)}`);

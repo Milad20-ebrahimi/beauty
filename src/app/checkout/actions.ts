@@ -63,11 +63,15 @@ export async function placeOrder(formData: FormData) {
           status: "PENDING_PAYMENT",
           subtotal,
           total: subtotal,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           items: { create: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity, unitPrice: productById.get(item.productId)!.price })) },
           address: { create: { recipientName, phone, province, city, addressLine, postalCode: postalCode || null, deliveryNote: deliveryNote || null } }
         }
       });
-      for (const item of cart.items) await tx.product.update({ where: { id: item.productId }, data: { reservedStock: { increment: item.quantity } } });
+      for (const item of cart.items) {
+        await tx.product.update({ where: { id: item.productId }, data: { reservedStock: { increment: item.quantity } } });
+        await tx.inventoryMovement.create({ data: { productId: item.productId, orderId: createdOrder.id, type: "RESERVATION", reservedDelta: item.quantity, note: "رزرو موجودی هنگام ثبت سفارش" } });
+      }
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       return createdOrder;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

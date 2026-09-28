@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { removePaymentReceipt, savePaymentReceipt } from "@/lib/payment-receipt";
+import { expireStaleOrders } from "@/lib/order-inventory";
 
 export async function submitPaymentReceipt(orderId: string, formData: FormData) {
+  await expireStaleOrders();
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { paymentReceipt: true } });
   if (!order || order.status !== "PENDING_PAYMENT" || order.paymentReceipt?.status === "APPROVED") redirect(`/payment/${orderId}?error=locked`);
   const settings = await prisma.manualPaymentSettings.findUnique({ where: { id: "default" } });

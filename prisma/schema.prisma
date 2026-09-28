@@ -83,6 +83,14 @@ enum PaymentReceiptStatus {
   REJECTED
 }
 
+enum InventoryMovementType {
+  ADJUSTMENT
+  RESERVATION
+  RELEASE
+  SALE
+  RETURN
+}
+
 model User {
   id             String          @id @default(cuid())
   phone          String?         @unique
@@ -207,6 +215,7 @@ model Product {
   cartItems           CartItem[]
   orderItems          OrderItem[]
   matchScores         MatchScoreSnapshot[]
+  inventoryMovements  InventoryMovement[]
 
   @@index([brandId])
   @@index([categoryId])
@@ -359,13 +368,32 @@ model Order {
   total       Int
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  expiresAt   DateTime?
+  inventoryFinalizedAt DateTime?
   user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   address     OrderAddress?
   paymentReceipt PaymentReceipt?
+  inventoryMovements InventoryMovement[]
 
   @@index([userId])
   @@index([status])
+}
+
+model InventoryMovement {
+  id            String                @id @default(cuid())
+  productId     String
+  orderId       String?
+  type          InventoryMovementType
+  stockDelta    Int                   @default(0)
+  reservedDelta Int                   @default(0)
+  note          String?
+  createdAt     DateTime              @default(now())
+  product       Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order         Order?                @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([productId, createdAt])
+  @@index([orderId])
 }
 
 model PaymentReceipt {

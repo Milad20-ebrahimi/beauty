@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { submitPaymentReceipt } from "./actions";
+import { expireStaleOrders } from "@/lib/order-inventory";
 
 export const dynamic = "force-dynamic";
 const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price);
@@ -9,6 +10,7 @@ const receiptLabels: Record<string, string> = { PENDING: "در انتظار بر
 
 export default async function PaymentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; error?: string }> }) {
   const { id } = await params;
+  await expireStaleOrders();
   const query = await searchParams;
   const [order, settings] = await Promise.all([
     prisma.order.findUnique({ where: { id }, include: { address: true, paymentReceipt: true } }),
@@ -16,10 +18,13 @@ export default async function PaymentPage({ params, searchParams }: { params: Pr
   ]);
   if (!order?.address) notFound();
   const canSubmit = order.status === "PENDING_PAYMENT" && order.paymentReceipt?.status !== "APPROVED" && settings?.active;
+  const remainingMinutes = order.expiresAt ? Math.max(0, Math.ceil((order.expiresAt.getTime() - Date.now()) / 60000)) : null;
   return <main className="home-shell payment-page">
     <section className="compact-hero results-header"><div className="hero-content"><p className="eyebrow">پرداخت سفارش</p><h1>پرداخت کارت‌به‌کارت</h1><p className="hero-copy">مبلغ را انتقال بده و تصویر رسید را برای بررسی مدیر بارگذاری کن.</p></div></section>
     {query.submitted ? <div className="cart-message success">رسید دریافت شد و در صف بررسی قرار گرفت.</div> : null}
     {query.error ? <div className="cart-message error">{query.error === "locked" ? "این سفارش دیگر امکان ارسال رسید ندارد." : query.error === "disabled" ? "پرداخت کارت‌به‌کارت موقتاً غیرفعال است." : decodeURIComponent(query.error)}</div> : null}
+    {remainingMinutes !== null && order.status === "PENDING_PAYMENT" ? <div className="payment-deadline"><strong>مهلت پرداخت</strong><span>{Math.floor(remainingMinutes / 60)} ساعت و {remainingMinutes % 60} دقیقه باقی مانده است.</span></div> : null}
+    {order.status === "CANCELLED" ? <div className="cart-message error">مهلت پرداخت این سفارش تمام شده و موجودی آن آزاد شده است.</div> : null}
     {!settings ? <section className="empty-state"><h2>اطلاعات پرداخت هنوز تنظیم نشده است.</h2><p>مدیر فروشگاه باید ابتدا شماره کارت را در پنل مدیریت ثبت کند.</p></section> : <div className="payment-layout">
       <section className="payment-card"><p>مبلغ دقیق قابل پرداخت</p><strong>{formatPrice(order.total)} <small>تومان</small></strong><div className="bank-details"><span>شماره کارت</span><b dir="ltr">{settings.cardNumber}</b><span>به نام</span><b>{settings.holderName}</b>{settings.bankName ? <><span>بانک</span><b>{settings.bankName}</b></> : null}{settings.iban ? <><span>شماره شبا</span><b dir="ltr">{settings.iban}</b></> : null}</div>{settings.instructions ? <p className="payment-instructions">{settings.instructions}</p> : null}<div className="order-reference"><span>کد سفارش</span><strong>{order.id}</strong></div></section>
       <section className="receipt-panel"><div><p className="admin-kicker">مرحله دوم</p><h2>ارسال تصویر رسید</h2><p>تصویر خوانا و کامل باشد؛ مبلغ، زمان و شماره پیگیری مشخص باشد.</p></div>
