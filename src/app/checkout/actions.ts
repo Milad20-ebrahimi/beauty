@@ -30,6 +30,7 @@ export async function placeOrder(formData: FormData) {
   const addressLine = read(formData, "addressLine");
   const postalCode = onlyDigits(read(formData, "postalCode"));
   const deliveryNote = read(formData, "deliveryNote");
+  const shippingMethodId = read(formData, "shippingMethodId");
 
   if (recipientName.length < 2) redirect("/checkout?error=name");
   if (!/^09\d{9}$/.test(phone)) redirect("/checkout?error=phone");
@@ -37,6 +38,7 @@ export async function placeOrder(formData: FormData) {
   if (city.length < 2) redirect("/checkout?error=city");
   if (addressLine.length < 6) redirect("/checkout?error=address");
   if (postalCode && !/^\d{10}$/.test(postalCode)) redirect("/checkout?error=postal");
+  if (!shippingMethodId) redirect("/checkout?error=shipping");
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -57,12 +59,19 @@ export async function placeOrder(formData: FormData) {
         create: { phone, displayName: recipientName }
       });
       const subtotal = cart.items.reduce((sum, item) => sum + (productById.get(item.productId)?.price || 0) * item.quantity, 0);
+      const shippingMethod = await tx.shippingMethod.findFirst({ where: { id: shippingMethodId, active: true } });
+      if (!shippingMethod) throw new Error("INVALID_SHIPPING");
+      const shippingFee = shippingMethod.freeAbove && subtotal >= shippingMethod.freeAbove ? 0 : shippingMethod.price;
       const createdOrder = await tx.order.create({
         data: {
           userId: user.id,
           status: "PENDING_PAYMENT",
           subtotal,
-          total: subtotal,
+          shippingFee,
+          total: subtotal + shippingFee,
+          shippingMethodId: shippingMethod.id,
+          shippingMethodTitle: shippingMethod.title,
+          shippingEstimate: shippingMethod.estimatedDays,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           items: { create: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity, unitPrice: productById.get(item.productId)!.price })) },
           address: { create: { recipientName, phone, province, city, addressLine, postalCode: postalCode || null, deliveryNote: deliveryNote || null } }
@@ -79,6 +88,7 @@ export async function placeOrder(formData: FormData) {
   } catch (error) {
     if (error instanceof Error && error.message === "EMPTY_CART") redirect("/cart");
     if (error instanceof Error && error.message === "OUT_OF_STOCK") redirect("/checkout?error=stock");
+    if (error instanceof Error && error.message === "INVALID_SHIPPING") redirect("/checkout?error=shipping");
     throw error;
   }
 }

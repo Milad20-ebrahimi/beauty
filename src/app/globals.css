@@ -553,6 +553,36 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .customer-order-list footer > span { color: var(--coral); font-size: 9px; }
 .customer-order-list footer .primary-action { min-height: 38px; padding: 8px 12px; font-size: 9px; }
 .customer-order-warning { border-top: 1px solid #efc1b8; background: var(--coral-soft); padding: 11px 17px; color: #8f3828; font-size: 9px; }
+
+.shipping-admin-layout { display: grid; grid-template-columns: 340px minmax(0,1fr); gap: 14px; align-items: start; margin-top: 14px; }
+.shipping-create { position: sticky; top: 20px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 20px; }
+.shipping-create .primary-action { width: 100%; border: 0; }
+.shipping-method-list { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.shipping-method-list > article { position: relative; border-bottom: 1px solid var(--line); padding: 18px; }
+.shipping-method-list > article:last-child { border: 0; }
+.shipping-method-list article form > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.shipping-method-list article form > header > div { display: flex; align-items: center; gap: 8px; }
+.shipping-method-list article form > header strong { font-size: 12px; }
+.shipping-method-list article form > header small { color: var(--muted); font-size: 8px; }
+.shipping-method-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.shipping-method-footer label { display: flex; align-items: center; grid-template: none; gap: 6px; margin-left: auto; }
+.shipping-method-footer input { width: 16px; height: 16px; accent-color: var(--brand); }
+.shipping-method-footer span { color: var(--brand); font-size: 9px; font-weight: 900; }
+.shipping-method-footer button { border: 0; border-radius: 6px; background: var(--brand); padding: 8px 10px; color: #fff; font: inherit; font-size: 8px; font-weight: 900; cursor: pointer; }
+.shipping-delete { position: absolute; left: 18px; bottom: 18px; }
+.shipping-delete button { border: 0; background: transparent; color: var(--coral); font: inherit; font-size: 8px; cursor: pointer; }
+.checkout-shipping { display: grid; gap: 13px; border-top: 1px solid var(--line); padding-top: 19px; }
+.shipping-choice-list { display: grid; gap: 8px; }
+.shipping-choice-list label { display: grid; grid-template-columns: 19px 1fr auto; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfa; padding: 12px; cursor: pointer; }
+.shipping-choice-list label:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand); }
+.shipping-choice-list input { width: 17px; height: 17px; accent-color: var(--brand); }
+.shipping-choice-list label > span { display: grid; gap: 4px; }
+.shipping-choice-list strong { font-size: 11px; }
+.shipping-choice-list small { color: var(--muted); font-size: 8px; }
+.shipping-choice-list b { color: var(--brand); font-size: 10px; }
+.shipping-live-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 7px; background: var(--ink); padding: 13px; color: #fff; }
+.shipping-live-total span { color: #bdc8c3; font-size: 9px; }
+.shipping-live-total strong { font-size: 16px; }
 .admin-alert { margin-bottom: 16px; border-radius: 7px; padding: 13px 15px; font-size: 13px; font-weight: 700; }
 .admin-alert.success { border: 1px solid #add3c1; background: var(--brand-soft); color: var(--brand-dark); }
 .admin-alert.error { border: 1px solid #efc1b8; background: var(--coral-soft); color: #8f3828; }
@@ -728,6 +758,8 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .customer-login-page { grid-template-columns: 1fr; }
   .customer-login-card { margin: 0 auto; }
   .customer-login-page > aside { display: none; }
+  .shipping-admin-layout { grid-template-columns: 1fr; }
+  .shipping-create { position: static; }
 }
 
 @media (max-width: 640px) {
@@ -832,4 +864,10 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
   .account-shortcuts { grid-template-columns: 1fr; }
   .customer-order-list header, .customer-order-list footer { align-items: stretch; flex-direction: column; }
   .customer-order-list footer .primary-action { width: 100%; }
+  .shipping-method-footer { align-items: stretch; flex-direction: column; }
+  .shipping-method-footer label { margin: 0; }
+  .shipping-method-footer button { width: 100%; }
+  .shipping-delete { position: static; margin-top: 8px; }
+  .shipping-choice-list label { grid-template-columns: 19px 1fr; }
+  .shipping-choice-list b { grid-column: 2; }
 }
