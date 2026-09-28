@@ -15,6 +15,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
           <a href="/admin/products">محصولات</a>
           <a href="/admin/brands">برندها</a>
           <a href="/admin/categories">دسته‌بندی‌ها</a>
+          <a href="/admin/ingredients">ترکیبات</a>
           <span>نظرات <small>به‌زودی</small></span>
           <span>کاربران <small>به‌زودی</small></span>
         </nav>

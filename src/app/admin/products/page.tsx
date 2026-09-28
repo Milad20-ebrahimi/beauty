@@ -13,7 +13,7 @@ function formatPrice(price: number) {
 export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ success?: string }> }) {
   const { success } = await searchParams;
   const products = await prisma.product.findMany({
-    include: { brand: true, category: true, media: { take: 1, orderBy: { sortOrder: "asc" } }, _count: { select: { reviews: true } } },
+    include: { brand: true, category: true, media: { take: 1, orderBy: { sortOrder: "asc" } }, _count: { select: { reviews: true, media: true, ingredients: true, concerns: true, skinSuitability: true } } },
     orderBy: { updatedAt: "desc" }
   });
 
@@ -32,12 +32,13 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <div className="admin-product-list">
             {products.map((product) => {
               const available = Math.max(0, product.stock - product.reservedStock);
+              const completeness = [product._count.media > 0, product._count.ingredients > 0, product._count.concerns > 0, product._count.skinSuitability >= 5].filter(Boolean).length * 25;
               return (
                 <article key={product.id} className="admin-product-row">
                   <div className="admin-product-thumb">
                     {product.media[0] ? <Image src={product.media[0].url} alt={product.title} width={72} height={72} /> : <span>بدون تصویر</span>}
                   </div>
-                  <div className="admin-product-name"><strong>{product.title}</strong><span>{product.brand.name} · {product.category.title}</span></div>
+                  <div className="admin-product-name"><strong>{product.title}</strong><span>{product.brand.name} · {product.category.title}</span><div className="completeness-line"><i style={{ width: `${completeness}%` }} /><small>{completeness}٪ کامل</small></div></div>
                   <div className="admin-product-cell"><small>قیمت</small><strong>{formatPrice(product.price)} تومان</strong></div>
                   <div className="admin-product-cell"><small>موجودی</small><strong className={available <= 3 ? "low-stock" : ""}>{available}</strong></div>
                   <div className="admin-product-cell"><small>وضعیت</small><span className={`admin-status ${product.status.toLowerCase()}`}>{statusLabels[product.status]}</span></div>

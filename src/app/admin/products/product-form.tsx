@@ -1,9 +1,11 @@
 import Image from "next/image";
-import type { Brand, Category, Concern, Product } from "@prisma/client";
+import type { Brand, Category, Concern, Ingredient, Product, SkinType } from "@prisma/client";
 
 type ProductWithRelations = Product & {
   media: { id: string; url: string; alt?: string | null }[];
   concerns: { concernId: string }[];
+  ingredients: { ingredientId: string }[];
+  skinSuitability: { skinType: SkinType; score: number; note: string | null }[];
 };
 
 const roles = [
@@ -12,12 +14,18 @@ const roles = [
   ["BODYCARE", "مراقبت بدن"], ["FRAGRANCE", "عطر"], ["OTHER", "سایر"]
 ];
 
+const skinTypes = [
+  ["OILY", "پوست چرب"], ["DRY", "پوست خشک"], ["COMBINATION", "پوست مختلط"],
+  ["NORMAL", "پوست نرمال"], ["SENSITIVE", "پوست حساس"]
+] as const;
+
 export function ProductForm({
   action,
   product,
   brands,
   categories,
   concerns,
+  ingredients,
   error
 }: {
   action: (formData: FormData) => void | Promise<void>;
@@ -25,9 +33,12 @@ export function ProductForm({
   brands: Brand[];
   categories: Category[];
   concerns: Concern[];
+  ingredients: Ingredient[];
   error?: string;
 }) {
   const selectedConcerns = new Set(product?.concerns.map((item) => item.concernId));
+  const selectedIngredients = new Set(product?.ingredients.map((item) => item.ingredientId));
+  const suitabilityByType = new Map(product?.skinSuitability.map((item) => [item.skinType, item]));
 
   return (
     <form action={action} className="admin-product-form">
@@ -85,6 +96,27 @@ export function ProductForm({
         <div className="admin-form-heading"><span>۵</span><div><h2>دغدغه‌های مرتبط</h2><p>این موارد مستقیماً روی Match Score کاربران اثر می‌گذارند.</p></div></div>
         <div className="admin-check-grid concerns">
           {concerns.map((concern) => <label key={concern.id}><input type="checkbox" name="concerns" value={concern.slug} defaultChecked={selectedConcerns.has(concern.id)} /><span><strong>{concern.title}</strong><small>{concern.description}</small></span></label>)}
+        </div>
+      </section>
+
+      <section className="admin-form-section">
+        <div className="admin-form-heading"><span>۶</span><div><h2>ترکیبات کلیدی</h2><p>ترکیبات مؤثر و قابل توضیح محصول را انتخاب کن.</p></div></div>
+        {ingredients.length ? <div className="admin-check-grid concerns">
+          {ingredients.map((ingredient) => <label key={ingredient.id}><input type="checkbox" name="ingredients" value={ingredient.id} defaultChecked={selectedIngredients.has(ingredient.id)} /><span><strong>{ingredient.name}</strong><small>{ingredient.description || "بدون توضیح"}</small></span></label>)}
+        </div> : <div className="admin-inline-empty">هنوز ترکیبی ثبت نشده است. <a href="/admin/ingredients/new">ساخت ترکیب جدید</a></div>}
+      </section>
+
+      <section className="admin-form-section">
+        <div className="admin-form-heading"><span>۷</span><div><h2>سازگاری انواع پوست</h2><p>از ۲۰- برای نامناسب تا ۲۰+ برای بسیار مناسب امتیاز بده.</p></div></div>
+        <div className="skin-score-editor">
+          {skinTypes.map(([value, label]) => {
+            const suitability = suitabilityByType.get(value);
+            return <div key={value} className="skin-score-row">
+              <strong>{label}</strong>
+              <label><span>امتیاز</span><input type="number" name={`skinScore_${value}`} min="-20" max="20" defaultValue={suitability?.score ?? ""} placeholder="-20 تا 20" /></label>
+              <label><span>توضیح یا هشدار</span><input name={`skinNote_${value}`} defaultValue={suitability?.note || ""} placeholder="چرا مناسب یا نامناسب است؟" /></label>
+            </div>;
+          })}
         </div>
       </section>
 
