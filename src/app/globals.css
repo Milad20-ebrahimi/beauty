@@ -719,6 +719,10 @@ body:has(.admin-shell) .site-header-wrap, body:has(.admin-login-page) .site-head
 .notification-list h2 { margin: 5px 0; font-size: 13px; }
 .notification-list p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.8; }
 .notification-list form button { border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 8px 10px; color: var(--brand); font: inherit; font-size: 8px; font-weight: 900; cursor: pointer; }
+.seo-index-toggle { margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--canvas); padding: 13px; }
+.seo-index-toggle > span { display: grid; gap: 3px; }
+.seo-index-toggle strong { font-size: 10px; }
+.seo-index-toggle small { color: var(--muted); font-size: 8px; font-weight: 400; }
 .admin-alert { margin-bottom: 16px; border-radius: 7px; padding: 13px 15px; font-size: 13px; font-weight: 700; }
 .admin-alert.success { border: 1px solid #add3c1; background: var(--brand-soft); color: var(--brand-dark); }
 .admin-alert.error { border: 1px solid #efc1b8; background: var(--coral-soft); color: #8f3828; }

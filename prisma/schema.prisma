@@ -560,6 +560,20 @@ model ManualPaymentSettings {
   updatedAt    DateTime @updatedAt
 }
 
+model SeoSettings {
+  id                 String   @id @default("default")
+  siteName           String   @default("BeautyOS")
+  defaultTitle       String   @default("BeautyOS | انتخاب هوشمند محصولات زیبایی")
+  titleTemplate      String   @default("%s | BeautyOS")
+  defaultDescription String
+  siteUrl            String
+  organizationName   String?
+  logoUrl            String?
+  googleVerification String?
+  allowIndexing      Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
 model OrderAddress {
   id            String   @id @default(cuid())
   orderId       String   @unique

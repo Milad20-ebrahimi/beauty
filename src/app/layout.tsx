@@ -5,11 +5,12 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { CART_COOKIE } from "@/lib/cart";
 import { getCustomerUser } from "@/lib/auth";
+import { getSeoSettings } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "BeautyOS",
-  description: "فروشگاه زیبایی که کمک می‌کند محصول اشتباه نخرید."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getSeoSettings();
+  return { metadataBase: new URL(seo.siteUrl), title: { default: seo.defaultTitle, template: seo.titleTemplate }, description: seo.defaultDescription, alternates: { canonical: "/" }, verification: seo.googleVerification ? { google: seo.googleVerification } : undefined, robots: { index: seo.allowIndexing, follow: seo.allowIndexing, googleBot: { index: seo.allowIndexing, follow: seo.allowIndexing, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } }, openGraph: { type: "website", locale: "fa_IR", siteName: seo.siteName, title: seo.defaultTitle, description: seo.defaultDescription, url: "/" }, twitter: { card: "summary_large_image", title: seo.defaultTitle, description: seo.defaultDescription } };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const sessionId = (await cookies()).get(CART_COOKIE)?.value;

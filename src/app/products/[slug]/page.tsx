@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -7,8 +8,17 @@ import { addToCart } from "@/app/cart/actions";
 import { getCustomerUser } from "@/lib/auth";
 import { toggleCompare, toggleFavorite } from "../product-actions";
 import { COMPARE_COOKIE } from "@/lib/compare";
+import { getSeoSettings } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await prisma.product.findFirst({ where: { slug, status: "ACTIVE" }, include: { brand: true, media: { take: 1, orderBy: { sortOrder: "asc" } } } });
+  if (!product) return { title: "محصول پیدا نشد" };
+  const description = (product.description || product.subtitle || `خرید ${product.title} از برند ${product.brand.name}`).slice(0, 160);
+  return { title: product.title, description, alternates: { canonical: `/products/${product.slug}` }, openGraph: { type: "website", title: product.title, description, url: `/products/${product.slug}`, images: product.media[0] ? [{ url: product.media[0].url, alt: product.media[0].alt || product.title }] : undefined }, twitter: { card: "summary_large_image", title: product.title, description, images: product.media[0] ? [product.media[0].url] : undefined } };
+}
 
 const skinTypeLabels: Record<string, string> = {
   OILY: "چرب",
@@ -100,12 +110,15 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
     : 0;
   const availableStock = Math.max(0, product.stock - product.reservedStock);
   const image = product.media[0];
+  const seo = await getSeoSettings();
+  const structuredData = { "@context": "https://schema.org", "@type": "Product", name: product.title, description: product.description || product.subtitle, image: product.media.map((item) => new URL(item.url, seo.siteUrl).toString()), sku: product.id, brand: { "@type": "Brand", name: product.brand.name }, category: product.category.title, offers: { "@type": "Offer", url: `${seo.siteUrl}/products/${product.slug}`, priceCurrency: "IRR", price: product.price * 10, availability: availableStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" }, ...(product.reviews.length ? { aggregateRating: { "@type": "AggregateRating", ratingValue: averageRating, reviewCount: product.reviews.length } } : {}) };
 
   return (
     <main className="home-shell product-detail-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       {query.favoriteAdded ? <div className="cart-message success">محصول به علاقه‌مندی‌ها اضافه شد.</div> : null}{query.favoriteRemoved ? <div className="cart-message">محصول از علاقه‌مندی‌ها حذف شد.</div> : null}{query.compareAdded ? <div className="cart-message success">محصول به مقایسه اضافه شد. <a href="/compare">مشاهده مقایسه</a></div> : null}{query.compareRemoved ? <div className="cart-message">محصول از مقایسه حذف شد.</div> : null}{query.compareError ? <div className="cart-message error">حداکثر ۴ محصول را می‌توانی مقایسه کنی.</div> : null}
       <nav className="breadcrumb" aria-label="مسیر صفحه">
-        <a href="/">خانه</a><span>/</span><a href="/recommendations">پیشنهادها</a><span>/</span><span>{product.title}</span>
+        <a href="/">خانه</a><span>/</span><a href="/products">فروشگاه</a><span>/</span><span>{product.title}</span>
       </nav>
 
       <section className="product-detail-hero">
