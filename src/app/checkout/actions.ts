@@ -62,6 +62,7 @@ export async function placeOrder(formData: FormData) {
         update: { displayName: recipientName },
         create: { phone, displayName: recipientName }
       });
+      if (user.blockedAt) throw new Error("BLOCKED_CUSTOMER");
       const subtotal = cart.items.reduce((sum, item) => sum + (productById.get(item.productId)?.price || 0) * item.quantity, 0);
       const discountResult = discountCode ? await resolveDiscount(tx, discountCode, cart.items.map((item) => {
         const product = productById.get(item.productId)!;
@@ -108,6 +109,7 @@ export async function placeOrder(formData: FormData) {
     if (error instanceof Error && error.message === "EMPTY_CART") redirect("/cart");
     if (error instanceof Error && error.message === "OUT_OF_STOCK") redirect("/checkout?error=stock");
     if (error instanceof Error && error.message === "INVALID_SHIPPING") redirect("/checkout?error=shipping");
+    if (error instanceof Error && error.message === "BLOCKED_CUSTOMER") redirect("/checkout?error=blocked");
     if (error instanceof Error && error.message.startsWith("DISCOUNT_")) redirect(`/checkout?error=${error.message.toLowerCase()}`);
     throw error;
   }

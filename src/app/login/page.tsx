@@ -2,7 +2,7 @@ import { getCustomerUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { requestCustomerOtp, verifyCustomerOtp } from "./actions";
 
-const errors: Record<string, string> = { phone: "شماره موبایل معتبر وارد کن.", wait: "کد قبلی تازه ارسال شده؛ یک دقیقه بعد دوباره تلاش کن.", sms: "ارسال پیامک هنوز برای محیط واقعی تنظیم نشده است.", expired: "کد منقضی شده؛ کد جدید بگیر.", attempts: "تعداد تلاش بیش از حد مجاز است؛ کد جدید بگیر.", code: "کد واردشده صحیح نیست." };
+const errors: Record<string, string> = { phone: "شماره موبایل معتبر وارد کن.", wait: "کد قبلی تازه ارسال شده؛ یک دقیقه بعد دوباره تلاش کن.", sms: "ارسال پیامک هنوز برای محیط واقعی تنظیم نشده است.", expired: "کد منقضی شده؛ کد جدید بگیر.", attempts: "تعداد تلاش بیش از حد مجاز است؛ کد جدید بگیر.", code: "کد واردشده صحیح نیست.", blocked: "این حساب غیرفعال شده است؛ برای بررسی با پشتیبانی تماس بگیر." };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ step?: string; phone?: string; next?: string; devCode?: string; error?: string }> }) {
   const query = await searchParams;

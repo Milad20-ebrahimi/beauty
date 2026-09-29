@@ -101,7 +101,8 @@ export async function getCustomerUser() {
   const payload = `${scope}.${userId}.${expiresAtText}`;
   const expiresAt = Number(expiresAtText);
   if (scope !== "customer" || !userId || !signature || !Number.isFinite(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !safeEqual(signature, sign(payload))) return null;
-  return prisma.user.findUnique({ where: { id: userId }, select: { id: true, phone: true, displayName: true, role: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, phone: true, displayName: true, role: true, blockedAt: true } });
+  return user?.blockedAt ? null : user;
 }
 
 export async function requireCustomer() {

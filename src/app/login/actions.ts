@@ -22,6 +22,8 @@ export async function requestCustomerOtp(formData: FormData) {
   const phone = normalizePhone(formData.get("phone"));
   const next = safeNext(formData.get("next"));
   if (!/^09\d{9}$/.test(phone)) redirect(`/login?error=phone&next=${encodeURIComponent(next)}`);
+  const blockedUser = await prisma.user.findUnique({ where: { phone }, select: { blockedAt: true } });
+  if (blockedUser?.blockedAt) redirect(`/login?error=blocked&next=${encodeURIComponent(next)}`);
   const latest = await prisma.customerOtp.findFirst({ where: { phone }, orderBy: { createdAt: "desc" } });
   if (latest && Date.now() - latest.createdAt.getTime() < 60_000) redirect(`/login?error=wait&next=${encodeURIComponent(next)}`);
   const code = String(randomInt(100000, 1000000));
@@ -35,6 +37,8 @@ export async function verifyCustomerOtp(formData: FormData) {
   const phone = normalizePhone(formData.get("phone"));
   const code = toEnglishDigits(String(formData.get("code") || "")).replace(/\D/g, "");
   const next = safeNext(formData.get("next"));
+  const blockedUser = await prisma.user.findUnique({ where: { phone }, select: { blockedAt: true } });
+  if (blockedUser?.blockedAt) redirect(`/login?error=blocked&next=${encodeURIComponent(next)}`);
   const otp = await prisma.customerOtp.findFirst({ where: { phone, consumedAt: null }, orderBy: { createdAt: "desc" } });
   if (!otp || otp.expiresAt <= new Date()) redirect(`/login?error=expired&phone=${phone}&next=${encodeURIComponent(next)}`);
   if (otp.attempts >= 5) redirect(`/login?error=attempts&phone=${phone}&next=${encodeURIComponent(next)}`);
