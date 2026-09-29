@@ -36,6 +36,7 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
   {
     label: "بررسی خروجی مشتری",
     links: [
+      { href: "/admin/store-settings", icon: "⚙", title: "تنظیمات فروشگاه", description: "هدر، فوتر و راه‌های ارتباطی" },
       { href: "/admin/seo", icon: "G", title: "سئو و گوگل", description: "دامنه، عنوان و ایندکس سایت" },
       { href: "/recommendations", icon: "✦", title: "پیشنهادهای هوشمند", description: "دیدن رتبه‌بندی محصولات" },
       { href: "/routine", icon: "☼", title: "روتین‌ساز", description: "آزمایش روتین صبح و شب" }
