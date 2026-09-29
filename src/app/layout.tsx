@@ -25,8 +25,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div className="site-header-wrap">
           <header className="site-header">
             <SiteNavigation cartCount={cartCount} notificationCount={notificationCount} />
-            <a href="/" className="brand-mark" aria-label={`${store.storeName} - صفحه اصلی`}>
-              <span className={`brand-symbol ${store.logoUrl ? "has-logo" : ""}`}>{store.logoUrl ? <img src={store.logoUrl} alt={`لوگوی ${store.storeName}`} /> : store.storeName.charAt(0).toUpperCase()}</span>
+            <a href="/" className={`brand-mark ${store.logoUrl ? "" : "wordmark-only"}`} aria-label={`${store.storeName} - صفحه اصلی`}>
+              {store.logoUrl ? <span className="brand-symbol has-logo"><img src={store.logoUrl} alt={`لوگوی ${store.storeName}`} /></span> : null}
               <span className="brand-copy">
                 <strong>{store.storeName}</strong>
                 <small>{store.tagline}</small>
