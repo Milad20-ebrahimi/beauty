@@ -660,9 +660,28 @@ model HomePageSettings {
   newProductsEnabled     Boolean  @default(true)
   newProductsTitle       String   @default("تازه‌رسیده‌ها")
   newProductsDescription String?
+  newProductsMode        String   @default("AUTO")
+  newProductsLimit       Int      @default(10)
+  newProductsLink        String   @default("/products?sort=newest")
+  newProductsProductIds  Json?
   bestSellersEnabled     Boolean  @default(true)
   bestSellersTitle       String   @default("محبوب‌ترین انتخاب‌ها")
   bestSellersDescription String?
+  bestSellersMode        String   @default("AUTO")
+  bestSellersLimit       Int      @default(10)
+  bestSellersLink        String   @default("/products?sort=popular")
+  bestSellersProductIds  Json?
+  trendingEnabled        Boolean  @default(true)
+  trendingTitle          String   @default("ترند این روزها")
+  trendingDescription    String?
+  trendingLimit          Int      @default(10)
+  trendingLink           String   @default("/products")
+  editorsEnabled         Boolean  @default(false)
+  editorsTitle           String   @default("انتخاب ادیتور")
+  editorsDescription     String?
+  editorsLimit           Int      @default(10)
+  editorsLink            String   @default("/products")
+  editorsProductIds      Json?
   needsEnabled           Boolean  @default(true)
   needsTitle             String   @default("از نیاز پوستت شروع کن")
   needsDescription       String?

@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const sessionId = (await cookies()).get(CART_COOKIE)?.value;
   const [cart, customer, admin, store, header] = await Promise.all([sessionId ? prisma.cart.findFirst({ where: { sessionId }, select: { items: { select: { id:true,quantity:true,product:{select:{slug:true,title:true,price:true,media:{take:1,orderBy:{sortOrder:"asc"},select:{url:true,alt:true}}}} } } } }) : null, getCustomerUser(), getAdminUser(), getStoreSettings(), getHeaderSettings()]);
   const cartCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
-  const notificationCount = customer ? await prisma.notification.count({ where: { userId: customer.id, readAt: null } }) : 0;
+  const [notificationCount,favoriteCount] = customer ? await Promise.all([prisma.notification.count({ where: { userId: customer.id, readAt: null } }),prisma.favorite.count({where:{userId:customer.id}})]) : [0,0];
   const headerUser = admin || customer;
   return (
     <html lang="fa" dir="rtl">
@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <small>{store.tagline}</small>
               </span>
             </a>
-            <SiteNavigation navItems={header.navItems} cartItems={cart?.items||[]} cartCount={cartCount} notificationCount={notificationCount} user={headerUser} />
+            <SiteNavigation navItems={header.navItems} cartItems={cart?.items||[]} cartCount={cartCount} favoriteCount={favoriteCount} notificationCount={notificationCount} user={headerUser} />
           </header>
         </div>
         {children}
