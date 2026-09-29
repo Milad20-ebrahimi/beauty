@@ -656,6 +656,18 @@ model MediaAsset {
   @@index([kind, createdAt])
 }
 
+model HeaderSettings {
+  id                     String   @id @default("default")
+  announcementActive     Boolean  @default(true)
+  announcementText       String   @default("ارسال رایگان برای سفارش‌های منتخب")
+  announcementLink       String?
+  announcementLinkText   String?
+  announcementBackground String   @default("#D8A7B1")
+  announcementColor      String   @default("#4A1729")
+  navItems               Json
+  updatedAt              DateTime @updatedAt
+}
+
 model OrderAddress {
   id            String   @id @default(cuid())
   orderId       String   @unique

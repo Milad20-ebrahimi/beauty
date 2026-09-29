@@ -4,9 +4,10 @@ import { SiteNavigation } from "./site-navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { CART_COOKIE } from "@/lib/cart";
-import { getCustomerUser } from "@/lib/auth";
+import { getAdminUser, getCustomerUser } from "@/lib/auth";
 import { getSeoSettings } from "@/lib/seo";
 import { getStoreSettings } from "@/lib/store-settings";
+import { getHeaderSettings } from "@/lib/header-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getSeoSettings();
@@ -15,16 +16,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const sessionId = (await cookies()).get(CART_COOKIE)?.value;
-  const [cart, customer, store] = await Promise.all([sessionId ? prisma.cart.findFirst({ where: { sessionId }, select: { items: { select: { quantity: true } } } }) : null, getCustomerUser(), getStoreSettings()]);
+  const [cart, customer, admin, store, header] = await Promise.all([sessionId ? prisma.cart.findFirst({ where: { sessionId }, select: { items: { select: { id:true,quantity:true,product:{select:{slug:true,title:true,price:true,media:{take:1,orderBy:{sortOrder:"asc"},select:{url:true,alt:true}}}} } } } }) : null, getCustomerUser(), getAdminUser(), getStoreSettings(), getHeaderSettings()]);
   const cartCount = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const notificationCount = customer ? await prisma.notification.count({ where: { userId: customer.id, readAt: null } }) : 0;
+  const headerUser = admin || customer;
   return (
     <html lang="fa" dir="rtl">
       <body>
-        {store.announcementActive && store.announcementText ? <div className="site-announcement">{store.announcementLink ? <a href={store.announcementLink}>{store.announcementText}<span>مشاهده ←</span></a> : <p>{store.announcementText}</p>}</div> : null}
+        {header.announcementActive && header.announcementText ? <div className="site-announcement" style={{background:header.announcementBackground,color:header.announcementColor}}>{header.announcementLink ? <a href={header.announcementLink}>{header.announcementText}{header.announcementLinkText?<span style={{color:header.announcementColor}}>{header.announcementLinkText} ←</span>:null}</a> : <p>{header.announcementText}</p>}</div> : null}
         <div className="site-header-wrap">
           <header className="site-header">
-            <SiteNavigation cartCount={cartCount} notificationCount={notificationCount} />
             <a href="/" className={`brand-mark ${store.logoUrl ? "" : "wordmark-only"}`} aria-label={`${store.storeName} - صفحه اصلی`}>
               {store.logoUrl ? <span className="brand-symbol has-logo"><img src={store.logoUrl} alt={`لوگوی ${store.storeName}`} /></span> : null}
               <span className="brand-copy">
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <small>{store.tagline}</small>
               </span>
             </a>
+            <SiteNavigation navItems={header.navItems} cartItems={cart?.items||[]} cartCount={cartCount} notificationCount={notificationCount} user={headerUser} />
           </header>
         </div>
         {children}

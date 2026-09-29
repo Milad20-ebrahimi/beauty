@@ -37,6 +37,7 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
     label: "بررسی خروجی مشتری",
     links: [
       { href: "/admin/homepage", icon: "▤", title: "صفحه اصلی", description: "ویدیو، پوسترها و ویترین محصولات" },
+      { href: "/admin/header", icon: "☰", title: "مدیریت نوبار", description: "تبلیغ، لینک‌ها و ترتیب منو" },
       { href: "/admin/media", icon: "◫", title: "کتابخانه رسانه", description: "آپلود تصویر، ویدیو و لوگو" },
       { href: "/admin/store-settings", icon: "⚙", title: "تنظیمات فروشگاه", description: "هدر، فوتر و راه‌های ارتباطی" },
       { href: "/admin/seo", icon: "G", title: "سئو و گوگل", description: "دامنه، عنوان و ایندکس سایت" },
