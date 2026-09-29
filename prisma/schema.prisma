@@ -599,6 +599,49 @@ model StoreSettings {
   updatedAt          DateTime @updatedAt
 }
 
+model HomePageSettings {
+  id                     String   @id @default("default")
+  heroEnabled            Boolean  @default(true)
+  heroVideoUrl           String?
+  heroPosterUrl          String?
+  heroEyebrow            String   @default("BeautyOS Edit")
+  heroTitle              String   @default("زیبایی، با انتخابی که شبیه توست.")
+  heroDescription        String?
+  heroButtonText         String   @default("کشف محصولات")
+  heroButtonLink         String   @default("/products")
+  heroSecondaryText      String?
+  heroSecondaryLink      String?
+  postersEnabled         Boolean  @default(true)
+  posterOneImageUrl      String?
+  posterOneKicker        String?
+  posterOneTitle         String   @default("آیین مراقبت روزانه")
+  posterOneDescription   String?
+  posterOneButtonText    String   @default("مشاهده روتین")
+  posterOneLink          String   @default("/routine")
+  posterTwoImageUrl      String?
+  posterTwoKicker        String?
+  posterTwoTitle         String   @default("انتخاب دقیق برای پوست تو")
+  posterTwoDescription   String?
+  posterTwoButtonText    String   @default("ساخت پاسپورت")
+  posterTwoLink          String   @default("/passport")
+  newProductsEnabled     Boolean  @default(true)
+  newProductsTitle       String   @default("تازه‌رسیده‌ها")
+  newProductsDescription String?
+  bestSellersEnabled     Boolean  @default(true)
+  bestSellersTitle       String   @default("محبوب‌ترین انتخاب‌ها")
+  bestSellersDescription String?
+  needsEnabled           Boolean  @default(true)
+  needsTitle             String   @default("از نیاز پوستت شروع کن")
+  needsDescription       String?
+  passportEnabled        Boolean  @default(true)
+  passportEyebrow        String   @default("Beauty Passport")
+  passportTitle          String   @default("فروشگاه باید تو را بشناسد.")
+  passportDescription    String?
+  passportButtonText     String   @default("ساخت پاسپورت زیبایی")
+  passportButtonLink     String   @default("/passport")
+  updatedAt              DateTime @updatedAt
+}
+
 model OrderAddress {
   id            String   @id @default(cuid())
   orderId       String   @unique
