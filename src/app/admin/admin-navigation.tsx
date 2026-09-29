@@ -37,9 +37,8 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
     label: "بررسی خروجی مشتری",
     links: [
       { href: "/admin/homepage", icon: "▤", title: "صفحه اصلی", description: "ویدیو، پوسترها و ویترین محصولات" },
-      { href: "/admin/header", icon: "☰", title: "مدیریت نوبار", description: "تبلیغ، لینک‌ها و ترتیب منو" },
+      { href: "/admin/header", icon: "☰", title: "هدر، لوگو و فوتر", description: "تمام تنظیمات سربرگ و پایین سایت" },
       { href: "/admin/media", icon: "◫", title: "کتابخانه رسانه", description: "آپلود تصویر، ویدیو و لوگو" },
-      { href: "/admin/store-settings", icon: "⚙", title: "تنظیمات فروشگاه", description: "هدر، فوتر و راه‌های ارتباطی" },
       { href: "/admin/seo", icon: "G", title: "سئو و گوگل", description: "دامنه، عنوان و ایندکس سایت" },
       { href: "/recommendations", icon: "✦", title: "پیشنهادهای هوشمند", description: "دیدن رتبه‌بندی محصولات" },
       { href: "/routine", icon: "☼", title: "روتین‌ساز", description: "آزمایش روتین صبح و شب" }
