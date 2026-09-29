@@ -1575,3 +1575,11 @@ body{background:#f2f2ef;color:#111;font-family:Arial,"Segoe UI",Tahoma,sans-seri
   .mobile-site-nav a.active{color:#101c3a}
   .mobile-site-nav a b{background:#101c3a}
 }
+
+/* Local Persian typography — no external font request */
+html[lang="fa"] body{font-family:"Vazirmatn Variable",Vazirmatn,Tahoma,Arial,sans-serif;font-variation-settings:"wght" 400}
+html[lang="fa"] body *{font-family:inherit}
+html[lang="fa"] button,
+html[lang="fa"] input,
+html[lang="fa"] textarea,
+html[lang="fa"] select{font:inherit}
