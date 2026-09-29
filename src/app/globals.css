@@ -1558,3 +1558,20 @@ body{background:#f2f2ef;color:#111;font-family:Arial,"Segoe UI",Tahoma,sans-seri
 
 @media(max-width:1000px){.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-card{--image-h:360px}.editorial-product-rail{grid-auto-columns:38%}}
 @media(max-width:760px){.mobile-site-nav{border-color:#ccc;background:rgba(255,255,255,.97)}.mobile-site-nav a,.mobile-site-nav a.active{color:#111}.mobile-site-nav a b{background:#111}.video-hero-media{height:72vh;min-height:560px;aspect-ratio:auto}.video-hero-copy{position:absolute;right:24px;bottom:38px;width:calc(100% - 48px);min-height:0;align-content:end;padding:0;color:#fff}.video-hero-copy h1{color:#fff;font-size:48px}.video-hero-copy p{color:#fff}.video-hero-copy>div,.video-hero-copy .luxury-button{width:auto}.duo-posters{width:100%}.editorial-product-rail{grid-auto-columns:78%}.catalog-layout{grid-template-columns:1fr}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 6px}.catalog-card{--image-h:250px}.catalog-card-body h2{font-size:9px}.product-detail-info{padding:10px 0}.footer-intro h2{font-size:48px}}
+
+/* Luxury Phosphor navigation icons */
+.editorial-actions .header-tool>a,
+.editorial-actions .header-tool>button,
+.header-search-drawer>form>button:first-child,
+.mini-cart-empty>span{color:#101c3a}
+.editorial-actions .header-tool>a>span,
+.editorial-actions .header-tool>button>span,
+.mobile-site-nav a>span{display:grid;place-items:center}
+.editorial-actions svg,.mobile-site-nav svg,.mini-cart-empty svg,.header-search-drawer svg{display:block}
+.editorial-actions .header-tool>a:hover,
+.editorial-actions .header-tool>button:hover{color:#273b6b}
+@media(max-width:760px){
+  .mobile-site-nav a{color:#858896}
+  .mobile-site-nav a.active{color:#101c3a}
+  .mobile-site-nav a b{background:#101c3a}
+}
