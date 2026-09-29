@@ -1,13 +1,16 @@
 import { getHomeSettings } from "@/lib/home-settings";
 import { saveHomepage } from "./actions";
+import { prisma } from "@/lib/prisma";
+import { HomepageMediaPicker } from "./media-picker";
 export const dynamic = "force-dynamic";
 
 const Toggle = ({ name, checked, title, hint }: { name: string; checked: boolean; title: string; hint: string }) => <label className="homepage-toggle"><input type="checkbox" name={name} defaultChecked={checked} /><span><strong>{title}</strong><small>{hint}</small></span></label>;
 
 export default async function HomepageAdmin({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
-  const [home, query] = await Promise.all([getHomeSettings(), searchParams]);
+  const [home, query, assets] = await Promise.all([getHomeSettings(), searchParams, prisma.mediaAsset.findMany({ select:{id:true,url:true,kind:true,alt:true}, orderBy:{createdAt:"desc"}, take:20 })]);
   return <main className="admin-page"><header className="admin-page-header"><div><p className="admin-kicker">ویترین اصلی فروشگاه</p><h1>مدیریت صفحه اصلی</h1><p>ویدیو، دو پوستر، ردیف محصولات و معرفی پاسپورت را بدون تغییر کد کنترل کن.</p></div><a href="/" className="secondary-action">دیدن صفحه اصلی</a></header>
     <section className="admin-help-note"><strong>پیشنهاد برای بهترین نتیجه:</strong><p>ویدیو افقی MP4 با نسبت ۱۶:۹ و بدون نوشته داخل تصویر استفاده کن. پوسترها بهتر است عمودی یا مربعی و هر دو هم‌اندازه باشند.</p></section>
+    <HomepageMediaPicker assets={assets} />
     {query.success ? <div className="admin-alert success">صفحه اصلی ذخیره و منتشر شد.</div> : null}{query.error ? <div className="admin-alert error">{query.error === "url" ? "لینک‌ها باید با https:// یا / شروع شوند." : "فیلدهای ضروری را کامل کن."}</div> : null}
     <form action={saveHomepage} className="admin-product-form homepage-admin-form">
       <section className="admin-form-section"><div className="admin-form-heading"><span>۱</span><div><h2>بنر ویدیویی اصلی</h2><p>اولین تصویر صفحه؛ بزرگ و تمام‌عرض.</p></div></div><Toggle name="heroEnabled" checked={home.heroEnabled} title="نمایش بنر ویدیویی" hint="با خاموش‌کردن، کل این بخش حذف می‌شود." /><div className="admin-form-grid"><label className="field-wide">آدرس فایل ویدیو<input name="heroVideoUrl" dir="ltr" defaultValue={home.heroVideoUrl || ""} placeholder="/media/hero.mp4 یا https://.../video.mp4" /><small>ویدیو خودکار، بی‌صدا و تکرارشونده پخش می‌شود.</small></label><label className="field-wide">تصویر جایگزین ویدیو<input name="heroPosterUrl" dir="ltr" defaultValue={home.heroPosterUrl || ""} placeholder="/media/hero-poster.jpg" /><small>تا زمان بارگذاری ویدیو نمایش داده می‌شود.</small></label><label>متن کوچک بالای عنوان<input name="heroEyebrow" defaultValue={home.heroEyebrow} /></label><label>عنوان اصلی<input name="heroTitle" required defaultValue={home.heroTitle} /></label><label className="field-wide">توضیح<textarea name="heroDescription" rows={3} defaultValue={home.heroDescription || ""} /></label><label>متن دکمه اصلی<input name="heroButtonText" required defaultValue={home.heroButtonText} /></label><label>لینک دکمه اصلی<input name="heroButtonLink" dir="ltr" required defaultValue={home.heroButtonLink} /></label><label>متن دکمه دوم<input name="heroSecondaryText" defaultValue={home.heroSecondaryText || ""} /></label><label>لینک دکمه دوم<input name="heroSecondaryLink" dir="ltr" defaultValue={home.heroSecondaryLink || ""} /></label></div></section>

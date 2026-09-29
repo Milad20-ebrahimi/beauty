@@ -642,6 +642,20 @@ model HomePageSettings {
   updatedAt              DateTime @updatedAt
 }
 
+model MediaAsset {
+  id           String   @id @default(cuid())
+  url          String   @unique
+  filename     String
+  originalName String
+  mimeType     String
+  kind         String
+  sizeBytes    Int
+  alt          String?
+  createdAt    DateTime @default(now())
+
+  @@index([kind, createdAt])
+}
+
 model OrderAddress {
   id            String   @id @default(cuid())
   orderId       String   @unique

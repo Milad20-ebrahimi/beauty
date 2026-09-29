@@ -12,3 +12,5 @@ public/uploads/products/*
 !public/uploads/products/.gitkeep
 public/uploads/receipts/*
 !public/uploads/receipts/.gitkeep
+public/uploads/media/*
+!public/uploads/media/.gitkeep
