@@ -231,6 +231,9 @@ model Product {
   title               String
   subtitle            String?
   description         String?
+  usageInstructions   String?
+  cautionText         String?
+  sizeLabel           String?
   status              ProductStatus   @default(DRAFT)
   role                ProductRole     @default(OTHER)
   price               Int

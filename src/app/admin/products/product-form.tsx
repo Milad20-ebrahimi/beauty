@@ -51,6 +51,9 @@ export function ProductForm({
           <label><span>اسلاگ انگلیسی *</span><input name="slug" required dir="ltr" defaultValue={product?.slug} placeholder="gentle-face-cleanser" /></label>
           <label><span>زیرعنوان</span><input name="subtitle" defaultValue={product?.subtitle || ""} placeholder="مناسب پوست خشک و حساس" /></label>
           <label className="field-wide"><span>توضیحات</span><textarea name="description" rows={4} defaultValue={product?.description || ""} placeholder="مزیت اصلی، بافت و کاربرد محصول را کوتاه و شفاف بنویس." /></label>
+          <label><span>حجم یا اندازه</span><input name="sizeLabel" defaultValue={product?.sizeLabel || ""} placeholder="مثلاً ۵۰ میلی‌لیتر" /></label>
+          <label className="field-wide"><span>روش مصرف</span><textarea name="usageInstructions" rows={3} defaultValue={product?.usageInstructions || ""} placeholder="زمان، مقدار و ترتیب استفاده را ساده توضیح بده." /></label>
+          <label className="field-wide"><span>هشدار و احتیاط</span><textarea name="cautionText" rows={3} defaultValue={product?.cautionText || ""} placeholder="موارد حساسیت، تست پچ یا ناحیه‌هایی که نباید استفاده شود." /></label>
         </div>
       </section>
 

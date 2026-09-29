@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -9,6 +8,8 @@ import { getCustomerUser } from "@/lib/auth";
 import { toggleCompare, toggleFavorite } from "../product-actions";
 import { COMPARE_COOKIE } from "@/lib/compare";
 import { getSeoSettings } from "@/lib/seo";
+import { ProductGallery } from "./product-gallery";
+import { ProductCard } from "@/app/product-card";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +110,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
     ? product.reviews.reduce((total, review) => total + review.rating, 0) / product.reviews.length
     : 0;
   const availableStock = Math.max(0, product.stock - product.reservedStock);
-  const image = product.media[0];
+  const relatedProducts=await prisma.product.findMany({where:{status:"ACTIVE",id:{not:product.id},OR:[{categoryId:product.categoryId},{brandId:product.brandId}]},select:{id:true,slug:true,title:true,subtitle:true,price:true,compareAtPrice:true,stock:true,reservedStock:true,media:{take:2,orderBy:{sortOrder:"asc"},select:{url:true,alt:true}},brand:{select:{name:true}},reviews:{where:{status:"APPROVED"},select:{rating:true}}},orderBy:{createdAt:"desc"},take:5});
   const seo = await getSeoSettings();
   const structuredData = { "@context": "https://schema.org", "@type": "Product", name: product.title, description: product.description || product.subtitle, image: product.media.map((item) => new URL(item.url, seo.siteUrl).toString()), sku: product.id, brand: { "@type": "Brand", name: product.brand.name }, category: product.category.title, offers: { "@type": "Offer", url: `${seo.siteUrl}/products/${product.slug}`, priceCurrency: "IRR", price: product.price * 10, availability: availableStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" }, ...(product.reviews.length ? { aggregateRating: { "@type": "AggregateRating", ratingValue: averageRating, reviewCount: product.reviews.length } } : {}) };
 
@@ -122,28 +123,18 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       </nav>
 
       <section className="product-detail-hero">
-        <div className="product-gallery">
-          {image ? (
-            <>
-              <Image src={image.url} alt={image.alt || product.title} width={900} height={900} priority className="detail-product-image" />
-              {product.media.length > 1 ? <div className="detail-gallery-strip">{product.media.slice(1).map((media) => <Image key={media.id} src={media.url} alt={media.alt || product.title} width={180} height={180} />)}</div> : null}
-            </>
-          ) : (
-            <div className="detail-image-empty">تصویر محصول به‌زودی اضافه می‌شود</div>
-          )}
-        </div>
+        <ProductGallery media={product.media} title={product.title}/>
 
         <div className="product-detail-info">
           <p className="eyebrow">{product.brand.name} · {product.category.title}</p>
           <h1>{product.title}</h1>
           {product.subtitle ? <p className="detail-subtitle">{product.subtitle}</p> : null}
+          {product.sizeLabel?<span className="detail-size">{product.sizeLabel}</span>:null}
 
           <div className="rating-row">
             <strong>★ {toPersianNumber(averageRating)}</strong>
             <span>از {toPersianNumber(product.reviews.length)} تجربه ثبت‌شده</span>
           </div>
-
-          <p className="detail-description">{product.description}</p>
 
           <div className="detail-tags">
             {product.fragranceFree ? <span>بدون عطر</span> : null}
@@ -153,7 +144,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
           </div>
 
           <div className="purchase-panel">
-            <div className="detail-price"><strong>{formatPrice(product.price)}</strong><span>تومان</span></div>
+          <div className="detail-price"><strong>{formatPrice(product.price)}</strong><span>تومان</span>{product.compareAtPrice&&product.compareAtPrice>product.price?<del>{formatPrice(product.compareAtPrice)}</del>:null}</div>
             <span className={availableStock > 0 ? "stock-status in-stock" : "stock-status"}>
               {availableStock > 0 ? `${toPersianNumber(availableStock)} عدد موجود` : "ناموجود"}
             </span>
@@ -161,11 +152,18 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
 
           <form action={addToCart} className="detail-cart-form">
             <input type="hidden" name="productId" value={product.id} />
+            <label>تعداد<select name="quantity" defaultValue="1">{Array.from({length:Math.min(availableStock,6)},(_,index)=><option key={index+1} value={index+1}>{toPersianNumber(index+1)}</option>)}</select></label>
             <button type="submit" className="primary-action detail-cta" disabled={availableStock === 0}>افزودن به سبد خرید</button>
           </form>
           <div className="detail-save-actions"><form action={toggleFavorite}><input type="hidden" name="productId" value={product.id} /><input type="hidden" name="returnTo" value={`/products/${product.slug}`} /><button className={isFavorite ? "selected" : ""}>{isFavorite ? "♥ ذخیره‌شده در علاقه‌مندی‌ها" : "♡ ذخیره برای بعد"}</button></form><form action={toggleCompare}><input type="hidden" name="productId" value={product.id} /><input type="hidden" name="returnTo" value={`/products/${product.slug}`} /><button className={isCompared ? "selected" : ""}>{isCompared ? "✓ در مقایسه" : "⇄ افزودن به مقایسه"}</button></form></div>
           <p className="cta-note">افزودن به سبد موجودی را کم نمی‌کند؛ موجودی هنگام ثبت سفارش دوباره بررسی می‌شود.</p>
         </div>
+      </section>
+
+      <section className="product-knowledge" aria-label="راهنمای محصول">
+        <details open><summary>درباره محصول <span>+</span></summary><p>{product.description||"توضیحات این محصول به‌زودی تکمیل می‌شود."}</p></details>
+        <details><summary>روش مصرف <span>+</span></summary><p>{product.usageInstructions||"روش مصرف این محصول هنوز ثبت نشده است."}</p></details>
+        <details><summary>هشدار و احتیاط <span>+</span></summary><p>{product.cautionText||"پیش از مصرف روی بخش کوچکی از پوست تست شود و در صورت تحریک، مصرف را متوقف کنید."}</p></details>
       </section>
 
       <section className="match-detail-section">
@@ -208,7 +206,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       </section>
 
       <section className="reviews-section">
-        <div className="section-intro"><div><p className="eyebrow">تجربه واقعی</p><h2>{activeProfile ? `نظر افراد با پوست ${skinTypeLabels[activeProfile.skinType]}` : "نظر کاربران"}</h2></div><span className="review-summary">★ {toPersianNumber(averageRating)} از ۵</span></div>
+        <div className="section-intro"><div><p className="eyebrow">تجربه واقعی</p><h2>{activeProfile ? `نظر افراد با پوست ${skinTypeLabels[activeProfile.skinType]}` : "نظر کاربران"}</h2></div><div className="review-heading-actions"><span className="review-summary">★ {toPersianNumber(averageRating)} از ۵</span>{customer?<a href="/account/reviews/new">ثبت تجربه</a>:<a href={`/login?next=/products/${product.slug}`}>ورود برای ثبت نظر</a>}</div></div>
         <div className="review-grid">
           {similarReviews.length ? similarReviews.map((review) => (
             <article key={review.id} className="review-card">
@@ -220,6 +218,8 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
           )) : <div className="empty-state">هنوز تجربه‌ای از پوست مشابه تو برای این محصول نداریم.</div>}
         </div>
       </section>
+      {relatedProducts.length?<section className="related-products"><header><p className="eyebrow">Complete the ritual</p><h2>محصولات مکمل و مشابه</h2></header><div>{relatedProducts.map(item=><ProductCard key={item.id} product={item} returnTo={`/products/${product.slug}`}/>)}</div></section>:null}
+      <div className="mobile-purchase-bar"><div><strong>{formatPrice(product.price)}</strong><span> تومان</span></div><form action={addToCart}><input type="hidden" name="productId" value={product.id}/><input type="hidden" name="quantity" value="1"/><button disabled={!availableStock}>{availableStock?"افزودن به سبد":"ناموجود"}</button></form></div>
     </main>
   );
 }

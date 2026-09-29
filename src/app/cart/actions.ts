@@ -19,22 +19,25 @@ async function getOrCreateCart() {
   return existingCart ? prisma.cart.findUniqueOrThrow({ where: { id: existingCart.id } }) : prisma.cart.create({ data: { sessionId } });
 }
 
-async function addProductIds(productIds: string[]) {
+async function addProductIds(productIds: string[], requestedQuantity = 1) {
   const uniqueIds = [...new Set(productIds)];
   if (!uniqueIds.length) return;
   const products = await prisma.product.findMany({ where: { id: { in: uniqueIds }, status: "ACTIVE" }, select: { id: true, stock: true, reservedStock: true } });
   const available = products.filter((product) => product.stock - product.reservedStock > 0);
   if (!available.length) return;
   const cart = await getOrCreateCart();
+  const existingItems=await prisma.cartItem.findMany({where:{cartId:cart.id,productId:{in:available.map(item=>item.id)}},select:{productId:true,quantity:true}});
+  const existingByProduct=new Map(existingItems.map(item=>[item.productId,item.quantity]));
   await prisma.$transaction(available.map((product) => prisma.cartItem.upsert({
-    where: { cartId_productId: { cartId: cart.id, productId: product.id } }, update: {}, create: { cartId: cart.id, productId: product.id, quantity: 1 }
+    where: { cartId_productId: { cartId: cart.id, productId: product.id } }, update: { quantity: Math.min((existingByProduct.get(product.id)||0)+requestedQuantity,product.stock-product.reservedStock) }, create: { cartId: cart.id, productId: product.id, quantity: Math.min(requestedQuantity, product.stock-product.reservedStock) }
   })));
 }
 
 export async function addToCart(formData: FormData) {
   const productId = formData.get("productId");
   if (typeof productId !== "string" || !productId) redirect("/cart?error=invalid");
-  await addProductIds([productId]);
+  const quantity=normalizeQuantity(formData.get("quantity"));
+  await addProductIds([productId],quantity);
   revalidatePath("/cart");
   redirect("/cart?added=1");
 }
