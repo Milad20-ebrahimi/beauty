@@ -16,6 +16,7 @@
     "auth:setup": "node scripts/setup-admin.mjs"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@prisma/client": "^6.16.2",
     "next": "15.5.26",
     "react": "^19.1.0",
