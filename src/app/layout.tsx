@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { SiteNavigation } from "./site-navigation";
 import { cookies } from "next/headers";
