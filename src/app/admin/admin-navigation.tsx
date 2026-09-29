@@ -8,7 +8,8 @@ const sections: Array<{ label: string; links: AdminLink[] }> = [
   {
     label: "مرکز مدیریت",
     links: [
-      { href: "/admin", exact: true, icon: "⌂", title: "نمای کلی", description: "آمار و مسیر شروع کار" }
+      { href: "/admin", exact: true, icon: "⌂", title: "نمای کلی", description: "آمار و مسیر شروع کار" },
+      { href: "/admin/reports", icon: "↗", title: "گزارش فروش", description: "درآمد، عملکرد و کارهای فوری" }
     ]
   },
   {
