@@ -601,29 +601,62 @@ model StoreSettings {
 
 model HomePageSettings {
   id                     String   @id @default("default")
+  heroInternalName       String   @default("کمپین اصلی")
   heroEnabled            Boolean  @default(true)
+  heroMediaType          String   @default("VIDEO")
+  heroDesktopImageUrl    String?
+  heroMobileImageUrl     String?
+  heroImageAlt           String?
   heroVideoUrl           String?
+  heroMobileVideoUrl     String?
   heroPosterUrl          String?
+  heroMobilePosterUrl    String?
+  heroMediaFit           String   @default("COVER")
+  heroMediaPosition      String   @default("CENTER")
+  heroCustomPosition     String?
+  heroTextPosition       String   @default("CENTER_RIGHT")
+  heroTextTheme          String   @default("LIGHT")
+  heroOverlayEnabled     Boolean  @default(true)
+  heroOverlayStrength    Int      @default(20)
   heroEyebrow            String   @default("BeautyOS Edit")
   heroTitle              String   @default("زیبایی، با انتخابی که شبیه توست.")
   heroDescription        String?
   heroButtonText         String   @default("کشف محصولات")
   heroButtonLink         String   @default("/products")
+  heroPrimaryEnabled     Boolean  @default(true)
   heroSecondaryText      String?
   heroSecondaryLink      String?
+  heroSecondaryEnabled   Boolean  @default(true)
+  heroStartDate          DateTime?
+  heroEndDate            DateTime?
+  heroSortOrder          Int      @default(0)
   postersEnabled         Boolean  @default(true)
+  posterOneEnabled       Boolean  @default(true)
   posterOneImageUrl      String?
+  posterOneMobileImageUrl String?
+  posterOneAlt           String?
   posterOneKicker        String?
   posterOneTitle         String   @default("آیین مراقبت روزانه")
   posterOneDescription   String?
   posterOneButtonText    String   @default("مشاهده روتین")
   posterOneLink          String   @default("/routine")
+  posterOneTextPosition  String   @default("BOTTOM_RIGHT")
+  posterOneTextTheme     String   @default("LIGHT")
+  posterOneOverlayEnabled Boolean @default(true)
+  posterOneOverlayStrength Int    @default(25)
+  posterTwoEnabled       Boolean  @default(true)
   posterTwoImageUrl      String?
+  posterTwoMobileImageUrl String?
+  posterTwoAlt           String?
   posterTwoKicker        String?
   posterTwoTitle         String   @default("انتخاب دقیق برای پوست تو")
   posterTwoDescription   String?
   posterTwoButtonText    String   @default("ساخت پاسپورت")
   posterTwoLink          String   @default("/passport")
+  posterTwoTextPosition  String   @default("BOTTOM_RIGHT")
+  posterTwoTextTheme     String   @default("LIGHT")
+  posterTwoOverlayEnabled Boolean @default(true)
+  posterTwoOverlayStrength Int    @default(25)
   newProductsEnabled     Boolean  @default(true)
   newProductsTitle       String   @default("تازه‌رسیده‌ها")
   newProductsDescription String?

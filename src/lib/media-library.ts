@@ -26,3 +26,16 @@ export async function removeMediaFile(url: string) {
   const filename = path.basename(url);
   try { await unlink(path.join(process.cwd(), "public", "uploads", "media", filename)); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
 }
+
+export async function replaceMediaAssetFile(url:string,file:File,expectedKind:string,expectedMime:string){
+  const isImage=IMAGE_TYPES.has(file.type),isVideo=VIDEO_TYPES.has(file.type);
+  if(!isImage&&!isVideo)throw new Error("TYPE");
+  const kind=isVideo?"VIDEO":"IMAGE";
+  if(kind!==expectedKind||file.type!==expectedMime)throw new Error("TYPE");
+  const limit=isVideo?30*1024*1024:8*1024*1024;
+  if(!file.size||file.size>limit)throw new Error("SIZE");
+  if(!url.startsWith(PREFIX))throw new Error("FILE");
+  const target=path.join(process.cwd(),"public","uploads","media",path.basename(url));
+  await writeFile(target,Buffer.from(await file.arrayBuffer()));
+  return {originalName:file.name.slice(0,180),sizeBytes:file.size};
+}

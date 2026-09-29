@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const headerUser = admin || customer;
   return (
     <html lang="fa" dir="rtl">
-      <body>
+      <body className={header.announcementActive && header.announcementText ? "has-announcement" : ""}>
         {header.announcementActive && header.announcementText ? <div className="site-announcement" style={{background:header.announcementBackground,color:header.announcementColor}}>{header.announcementLink ? <a href={header.announcementLink}>{header.announcementText}{header.announcementLinkText?<span style={{color:header.announcementColor}}>{header.announcementLinkText} ←</span>:null}</a> : <p>{header.announcementText}</p>}</div> : null}
         <div className="site-header-wrap">
           <header className="site-header">
