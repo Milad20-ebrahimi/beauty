@@ -1,0 +1,361 @@
+From fa545fa1336bb5c859684b93bb706aa2110fae4c Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Fri, 2 Oct 2026 10:01:43 -0400
+Subject: [PATCH] fix: harden order payment and inventory lifecycle
+
+---
+ src/app/admin/orders/actions.ts | 52 +++++++++++++++++++++++----------
+ src/app/admin/orders/page.tsx   |  3 +-
+ src/app/checkout/actions.ts     | 11 +++----
+ src/app/payment/[id]/actions.ts | 30 +++++++++++++------
+ src/lib/notifications.ts        | 25 ++++++++++++++++
+ src/lib/order-inventory.ts      | 27 +++++++++--------
+ src/lib/order-workflow.ts       | 17 +++++++++++
+ src/lib/transaction.ts          | 27 +++++++++++++++++
+ 8 files changed, 149 insertions(+), 43 deletions(-)
+ create mode 100644 src/lib/order-workflow.ts
+ create mode 100644 src/lib/transaction.ts
+
+diff --git a/src/app/admin/orders/actions.ts b/src/app/admin/orders/actions.ts
+index e66010b..19e25f6 100644
+--- a/src/app/admin/orders/actions.ts
++++ b/src/app/admin/orders/actions.ts
+@@ -3,10 +3,11 @@
+ import { revalidatePath } from "next/cache";
+ import { redirect } from "next/navigation";
+ import { NotificationType, OrderStatus } from "@prisma/client";
+-import { prisma } from "@/lib/prisma";
+ import { requireAdmin } from "@/lib/auth";
+ import { finalizePaidOrder, releaseOrderReservation } from "@/lib/order-inventory";
+ import { createCustomerNotification } from "@/lib/notifications";
++import { canAdminTransitionOrder } from "@/lib/order-workflow";
++import { withSerializableTransaction } from "@/lib/transaction";
+ 
+ const statusMessages: Partial<Record<OrderStatus, { title: string; message: string; type: NotificationType }>> = {
+   PROCESSING: { title: "سفارش در حال آماده‌سازی است", message: "پردازش سفارش شما شروع شده و محصولات در حال بسته‌بندی هستند.", type: NotificationType.ORDER },
+@@ -21,14 +22,25 @@ export async function updateOrderStatus(formData: FormData) {
+   const requestedStatus = String(formData.get("status") || "");
+   if (!Object.values(OrderStatus).includes(requestedStatus as OrderStatus)) redirect("/admin/orders?error=invalid");
+ 
+-  const order = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+-  if (!order || order.status === "CANCELLED" || (requestedStatus === "CANCELLED" && order.status !== "PENDING_PAYMENT")) redirect("/admin/orders?error=locked");
+   const status = requestedStatus as OrderStatus;
+-
+-  if (status === "CANCELLED") await releaseOrderReservation(order.id, "لغو سفارش توسط مدیر");
+-  else await prisma.order.update({ where: { id: order.id }, data: { status } });
+-  const notification = statusMessages[status];
+-  if (notification && status !== order.status) await createCustomerNotification(prisma, { userId: order.userId, ...notification, href: "/account", eventKey: `order-status-${order.id}-${status}` });
++  try {
++    if (status === "CANCELLED") {
++      const released = await releaseOrderReservation(orderId, "لغو سفارش توسط مدیر");
++      if (!released) redirect("/admin/orders?error=locked");
++    } else {
++      await withSerializableTransaction(async (tx) => {
++        const order = await tx.order.findUnique({ where: { id: orderId } });
++        if (!order || !canAdminTransitionOrder(order.status, status)) throw new Error("ORDER_TRANSITION_LOCKED");
++        if (order.status === status) return;
++        await tx.order.update({ where: { id: order.id }, data: { status } });
++        const notification = statusMessages[status];
++        if (notification) await createCustomerNotification(tx, { userId: order.userId, ...notification, href: "/account", eventKey: `order-status-${order.id}-${status}` });
++      });
++    }
++  } catch (error) {
++    if (error instanceof Error && ["ORDER_TRANSITION_LOCKED", "INVALID_INVENTORY_RESERVATION"].includes(error.message)) redirect("/admin/orders?error=locked");
++    throw error;
++  }
+   revalidatePath("/admin/orders");
+   redirect("/admin/orders?updated=1");
+ }
+@@ -39,14 +51,22 @@ export async function reviewPaymentReceipt(formData: FormData) {
+   const decision = String(formData.get("decision") || "");
+   const adminNote = String(formData.get("adminNote") || "").trim();
+   if (!receiptId || !["approve", "reject"].includes(decision) || (decision === "reject" && adminNote.length < 3)) redirect("/admin/orders?error=receipt");
+-  const receipt = await prisma.paymentReceipt.findUnique({ where: { id: receiptId }, include: { order: true } });
+-  if (!receipt || receipt.status !== "PENDING" || receipt.order.status !== "PENDING_PAYMENT") redirect("/admin/orders?error=locked");
+-  await prisma.$transaction(async (tx) => {
+-    await tx.paymentReceipt.update({ where: { id: receipt.id }, data: { status: decision === "approve" ? "APPROVED" : "REJECTED", adminNote: adminNote || null, reviewedAt: new Date() } });
+-    if (decision === "approve") await finalizePaidOrder(receipt.orderId, tx);
+-    await createCustomerNotification(tx, { userId: receipt.order.userId, type: NotificationType.PAYMENT, title: decision === "approve" ? "پرداخت تأیید شد" : "رسید پرداخت رد شد", message: decision === "approve" ? "پرداخت سفارش تأیید شد و سفارش وارد مرحله آماده‌سازی می‌شود." : `رسید نیاز به اصلاح دارد: ${adminNote}`, href: `/payment/${receipt.orderId}`, eventKey: `receipt-review-${receipt.id}-${decision}-${receipt.updatedAt.getTime()}` });
+-  });
++  let result: { orderId: string };
++  try {
++    result = await withSerializableTransaction(async (tx) => {
++      const receipt = await tx.paymentReceipt.findUnique({ where: { id: receiptId }, include: { order: true } });
++      if (!receipt || receipt.status !== "PENDING" || receipt.order.status !== "PENDING_PAYMENT" || receipt.order.inventoryFinalizedAt) throw new Error("RECEIPT_LOCKED");
++      await tx.paymentReceipt.update({ where: { id: receipt.id }, data: { status: decision === "approve" ? "APPROVED" : "REJECTED", adminNote: adminNote || null, reviewedAt: new Date() } });
++      if (decision === "approve") await finalizePaidOrder(receipt.orderId, tx);
++      else await tx.order.update({ where: { id: receipt.orderId }, data: { expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) } });
++      await createCustomerNotification(tx, { userId: receipt.order.userId, type: NotificationType.PAYMENT, title: decision === "approve" ? "پرداخت تأیید شد" : "رسید پرداخت رد شد", message: decision === "approve" ? "پرداخت سفارش تأیید شد و سفارش وارد مرحله آماده‌سازی می‌شود." : `رسید نیاز به اصلاح دارد: ${adminNote}`, href: `/payment/${receipt.orderId}`, eventKey: `receipt-review-${receipt.id}-${decision}-${receipt.updatedAt.getTime()}` });
++      return { orderId: receipt.orderId };
++    });
++  } catch (error) {
++    if (error instanceof Error && ["RECEIPT_LOCKED", "ORDER_NOT_PAYABLE"].includes(error.message)) redirect("/admin/orders?error=locked");
++    throw error;
++  }
+   revalidatePath("/admin/orders");
+-  revalidatePath(`/payment/${receipt.orderId}`);
++  revalidatePath(`/payment/${result.orderId}`);
+   redirect(`/admin/orders?receipt=${decision}`);
+ }
+diff --git a/src/app/admin/orders/page.tsx b/src/app/admin/orders/page.tsx
+index cf05c8b..9de4234 100644
+--- a/src/app/admin/orders/page.tsx
++++ b/src/app/admin/orders/page.tsx
+@@ -2,6 +2,7 @@ import Image from "next/image";
+ import { prisma } from "@/lib/prisma";
+ import { reviewPaymentReceipt, updateOrderStatus } from "./actions";
+ import { expireStaleOrders } from "@/lib/order-inventory";
++import { allowedAdminOrderStatuses } from "@/lib/order-workflow";
+ 
+ export const dynamic = "force-dynamic";
+ const formatPrice = (price: number) => new Intl.NumberFormat("fa-IR").format(price);
+@@ -22,7 +23,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams:
+       <header><div><span>سفارش</span><strong>{order.id.slice(-8)}</strong><small>{new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(order.createdAt)}</small></div><span className={`order-status ${order.status.toLowerCase()}`}>{statusLabels[order.status]}</span></header>
+       <div className="admin-order-body"><div><h3>مشتری و تحویل</h3><p>{order.address?.recipientName || order.user?.displayName || "بدون نام"}</p><p>{order.address?.phone || order.user?.phone || "بدون شماره"}</p><small>{order.address ? `${order.address.province}، ${order.address.city}، ${order.address.addressLine}` : "آدرس ثبت نشده"}</small></div><div><h3>محصولات</h3>{order.items.map((item) => <p key={item.id}>{item.quantity} × {item.product.title}</p>)}</div><div className="admin-order-total"><h3>مبلغ سفارش</h3><strong>{formatPrice(order.total)} تومان</strong><small>{order.items.reduce((sum, item) => sum + item.quantity, 0)} کالا · ارسال {formatPrice(order.shippingFee)} تومان</small>{order.discount > 0 ? <p>تخفیف {order.discountCodeText ? `(${order.discountCodeText})` : ""}: {formatPrice(order.discount)} تومان</p> : null}{order.shippingMethodTitle ? <p>{order.shippingMethodTitle}{order.shippingEstimate ? ` · ${order.shippingEstimate}` : ""}</p> : null}</div></div>
+       {order.paymentReceipt ? <section className="admin-receipt"><a href={order.paymentReceipt.imageUrl} target="_blank" rel="noreferrer"><Image src={order.paymentReceipt.imageUrl} alt="رسید پرداخت مشتری" width={110} height={110} /></a><div><h3>رسید پرداخت</h3><strong>{order.paymentReceipt.status === "PENDING" ? "منتظر بررسی شما" : order.paymentReceipt.status === "APPROVED" ? "تأییدشده" : "ردشده"}</strong>{order.paymentReceipt.customerNote ? <p>توضیح مشتری: {order.paymentReceipt.customerNote}</p> : null}</div>{order.paymentReceipt.status === "PENDING" ? <form action={reviewPaymentReceipt}><input type="hidden" name="receiptId" value={order.paymentReceipt.id} /><label>توضیح رد رسید <small>برای تأیید لازم نیست</small><input name="adminNote" placeholder="مثلاً مبلغ یا تصویر خوانا نیست" /></label><div><button name="decision" value="reject" className="receipt-reject">رد رسید</button><button name="decision" value="approve" className="receipt-approve">تأیید پرداخت</button></div></form> : order.paymentReceipt.adminNote ? <p className="receipt-admin-note">توضیح مدیر: {order.paymentReceipt.adminNote}</p> : null}</section> : <div className="admin-no-receipt">مشتری هنوز رسید پرداخت ارسال نکرده است.</div>}
+-      <footer><form action={updateOrderStatus}><input type="hidden" name="orderId" value={order.id} /><label>تغییر وضعیت<select name="status" defaultValue={order.status} disabled={order.status === "CANCELLED"}>{Object.entries(statusLabels).filter(([value]) => !["DRAFT", "REFUNDED", "PAID"].includes(value)).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button type="submit" className="primary-action" disabled={order.status === "CANCELLED"}>ثبت وضعیت</button></form>{order.status === "PENDING_PAYMENT" ? <small>وضعیت «پرداخت‌شده» فقط با تأیید رسید فعال می‌شود.</small> : null}</footer>
++      <footer><form action={updateOrderStatus}><input type="hidden" name="orderId" value={order.id} /><label>تغییر وضعیت<select name="status" defaultValue={order.status} disabled={allowedAdminOrderStatuses(order.status).length === 1}>{allowedAdminOrderStatuses(order.status).map((value) => <option key={value} value={value}>{statusLabels[value]}</option>)}</select></label><button type="submit" className="primary-action" disabled={allowedAdminOrderStatuses(order.status).length === 1}>ثبت وضعیت</button></form>{order.status === "PENDING_PAYMENT" ? <small>وضعیت «پرداخت‌شده» فقط با تأیید رسید فعال می‌شود.</small> : null}</footer>
+     </article>) : <div className="admin-empty"><strong>هنوز سفارشی ثبت نشده است.</strong><p>بعد از ثبت سفارش مشتری، اطلاعات آن اینجا نمایش داده می‌شود.</p></div>}</section>
+   </main>;
+ }
+diff --git a/src/app/checkout/actions.ts b/src/app/checkout/actions.ts
+index ef5761e..53029ce 100644
+--- a/src/app/checkout/actions.ts
++++ b/src/app/checkout/actions.ts
+@@ -2,11 +2,11 @@
+ 
+ import { cookies } from "next/headers";
+ import { redirect } from "next/navigation";
+-import { NotificationType, Prisma } from "@prisma/client";
+-import { prisma } from "@/lib/prisma";
++import { NotificationType } from "@prisma/client";
+ import { CART_COOKIE } from "@/lib/cart";
+ import { DISCOUNT_COOKIE, resolveDiscount } from "@/lib/discount";
+-import { createCustomerNotification } from "@/lib/notifications";
++import { createAdminNotifications, createCustomerNotification } from "@/lib/notifications";
++import { withSerializableTransaction } from "@/lib/transaction";
+ 
+ const toEnglishDigits = (value: string) => value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+ const cleanText = (value: string) => value.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/\s+/g, " ").trim();
+@@ -45,7 +45,7 @@ export async function placeOrder(formData: FormData) {
+   if (!shippingMethodId) redirect("/checkout?error=shipping");
+ 
+   try {
+-    const order = await prisma.$transaction(async (tx) => {
++    const order = await withSerializableTransaction(async (tx) => {
+       const cart = await tx.cart.findFirst({ where: { sessionId }, include: { items: true } });
+       if (!cart?.items.length) throw new Error("EMPTY_CART");
+       const productIds = cart.items.map((item) => item.productId);
+@@ -100,9 +100,10 @@ export async function placeOrder(formData: FormData) {
+         await tx.inventoryMovement.create({ data: { productId: item.productId, orderId: createdOrder.id, type: "RESERVATION", reservedDelta: item.quantity, note: "رزرو موجودی هنگام ثبت سفارش" } });
+       }
+       await createCustomerNotification(tx, { userId: user.id, type: NotificationType.ORDER, title: "سفارش ثبت شد", message: `سفارش ${createdOrder.id.slice(-8)} ثبت شد و تا ۲۴ ساعت منتظر پرداخت است.`, href: `/payment/${createdOrder.id}`, eventKey: `order-created-${createdOrder.id}` });
++      await createAdminNotifications(tx, { type: NotificationType.ORDER, title: "سفارش جدید ثبت شد", message: `سفارش ${createdOrder.id.slice(-8)} به مبلغ ${createdOrder.total.toLocaleString("fa-IR")} تومان منتظر پرداخت است.`, href: "/admin/orders", eventKey: `admin-order-created-${createdOrder.id}` });
+       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+       return createdOrder;
+-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
++    });
+     cookieStore.delete(DISCOUNT_COOKIE);
+     redirect(`/order-success/${order.id}`);
+   } catch (error) {
+diff --git a/src/app/payment/[id]/actions.ts b/src/app/payment/[id]/actions.ts
+index 0e953db..2377511 100644
+--- a/src/app/payment/[id]/actions.ts
++++ b/src/app/payment/[id]/actions.ts
+@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
+ import { removePaymentReceipt, savePaymentReceipt } from "@/lib/payment-receipt";
+ import { expireStaleOrders } from "@/lib/order-inventory";
+ import { NotificationType } from "@prisma/client";
+-import { createCustomerNotification } from "@/lib/notifications";
++import { createAdminNotifications, createCustomerNotification } from "@/lib/notifications";
++import { withSerializableTransaction } from "@/lib/transaction";
+ 
+ export async function submitPaymentReceipt(orderId: string, formData: FormData) {
+   await expireStaleOrders();
+@@ -19,15 +20,26 @@ export async function submitPaymentReceipt(orderId: string, formData: FormData)
+   let imageUrl: string;
+   try { imageUrl = await savePaymentReceipt(file); }
+   catch (error) { redirect(`/payment/${orderId}?error=${encodeURIComponent(error instanceof Error ? error.message : "فایل معتبر نیست.")}`); }
+-  const oldUrl = order.paymentReceipt?.imageUrl;
+-  await prisma.$transaction(async (tx) => {
+-    await tx.paymentReceipt.upsert({
+-      where: { orderId },
+-      update: { imageUrl, status: "PENDING", customerNote: String(formData.get("customerNote") || "").trim() || null, adminNote: null, reviewedAt: null },
+-      create: { orderId, imageUrl, customerNote: String(formData.get("customerNote") || "").trim() || null }
++  let oldUrl: string | null | undefined;
++  try {
++    oldUrl = await withSerializableTransaction(async (tx) => {
++      const currentOrder = await tx.order.findUnique({ where: { id: orderId }, include: { paymentReceipt: true } });
++      if (!currentOrder || currentOrder.status !== "PENDING_PAYMENT" || currentOrder.inventoryFinalizedAt || currentOrder.paymentReceipt?.status === "APPROVED") throw new Error("RECEIPT_LOCKED");
++      const previousUrl = currentOrder.paymentReceipt?.imageUrl;
++      const receipt = await tx.paymentReceipt.upsert({
++        where: { orderId },
++        update: { imageUrl, status: "PENDING", customerNote: String(formData.get("customerNote") || "").trim() || null, adminNote: null, reviewedAt: null },
++        create: { orderId, imageUrl, customerNote: String(formData.get("customerNote") || "").trim() || null }
++      });
++      await createCustomerNotification(tx, { userId: currentOrder.userId, type: NotificationType.PAYMENT, title: "رسید دریافت شد", message: "تصویر رسید شما دریافت شد و اکنون منتظر بررسی مدیر است.", href: `/payment/${orderId}`, eventKey: `receipt-submitted-${receipt.id}-${receipt.updatedAt.getTime()}` });
++      await createAdminNotifications(tx, { type: NotificationType.PAYMENT, title: "رسید پرداخت جدید", message: `رسید سفارش ${orderId.slice(-8)} برای بررسی ارسال شد.`, href: "/admin/orders", eventKey: `admin-receipt-submitted-${receipt.id}-${receipt.updatedAt.getTime()}` });
++      return previousUrl;
+     });
+-    await createCustomerNotification(tx, { userId: order.userId, type: NotificationType.PAYMENT, title: "رسید دریافت شد", message: "تصویر رسید شما دریافت شد و اکنون منتظر بررسی مدیر است.", href: `/payment/${orderId}` });
+-  });
++  } catch (error) {
++    await removePaymentReceipt(imageUrl);
++    if (error instanceof Error && error.message === "RECEIPT_LOCKED") redirect(`/payment/${orderId}?error=locked`);
++    throw error;
++  }
+   if (oldUrl && oldUrl !== imageUrl) await removePaymentReceipt(oldUrl);
+   revalidatePath(`/payment/${orderId}`);
+   revalidatePath("/admin/orders");
+diff --git a/src/lib/notifications.ts b/src/lib/notifications.ts
+index ae6c21b..b744e7e 100644
+--- a/src/lib/notifications.ts
++++ b/src/lib/notifications.ts
+@@ -22,3 +22,28 @@ export async function createCustomerNotification(db: DbClient, data: {
+   }
+   return db.notification.create({ data: { ...data, userId: data.userId } });
+ }
++
++export async function createAdminNotifications(db: DbClient, data: {
++  type: NotificationType;
++  title: string;
++  message: string;
++  href: string;
++  eventKey: string;
++}) {
++  const admins = await db.user.findMany({
++    where: { role: { in: ["ADMIN", "MANAGER"] }, blockedAt: null },
++    select: { id: true }
++  });
++  if (!admins.length) return { count: 0 };
++  return db.notification.createMany({
++    data: admins.map((admin) => ({
++      userId: admin.id,
++      type: data.type,
++      title: data.title,
++      message: data.message,
++      href: data.href,
++      eventKey: `${data.eventKey}-${admin.id}`
++    })),
++    skipDuplicates: true
++  });
++}
+diff --git a/src/lib/order-inventory.ts b/src/lib/order-inventory.ts
+index d3b1a83..94ac973 100644
+--- a/src/lib/order-inventory.ts
++++ b/src/lib/order-inventory.ts
+@@ -3,6 +3,7 @@ import "server-only";
+ import { NotificationType, Prisma } from "@prisma/client";
+ import { prisma } from "@/lib/prisma";
+ import { createCustomerNotification } from "@/lib/notifications";
++import { withSerializableTransaction } from "@/lib/transaction";
+ 
+ export const ORDER_HOLD_HOURS = 24;
+ 
+@@ -16,33 +17,35 @@ export async function expireStaleOrders() {
+     },
+     select: { id: true }
+   });
+-  for (const order of staleOrders) await releaseOrderReservation(order.id, "انقضای مهلت پرداخت");
+-  return staleOrders.length;
++  let expiredCount = 0;
++  for (const order of staleOrders) {
++    if (await releaseOrderReservation(order.id, "انقضای مهلت پرداخت")) expiredCount += 1;
++  }
++  return expiredCount;
+ }
+ 
+ export async function releaseOrderReservation(orderId: string, note: string) {
+-  return prisma.$transaction(async (tx) => {
+-    const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
++  return withSerializableTransaction(async (tx) => {
++    const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true, paymentReceipt: true } });
+     if (!order || order.inventoryFinalizedAt || order.status !== "PENDING_PAYMENT") return false;
++    if (note === "انقضای مهلت پرداخت" && order.paymentReceipt?.status === "PENDING") return false;
+     for (const item of order.items) {
+-      const product = await tx.product.findUniqueOrThrow({ where: { id: item.productId }, select: { reservedStock: true } });
+-      const released = Math.min(product.reservedStock, item.quantity);
+-      await tx.product.update({ where: { id: item.productId }, data: { reservedStock: { decrement: released } } });
+-      await tx.inventoryMovement.create({ data: { productId: item.productId, orderId, type: "RELEASE", reservedDelta: -released, note } });
++      const update = await tx.product.updateMany({ where: { id: item.productId, reservedStock: { gte: item.quantity } }, data: { reservedStock: { decrement: item.quantity } } });
++      if (update.count !== 1) throw new Error("INVALID_INVENTORY_RESERVATION");
++      await tx.inventoryMovement.create({ data: { productId: item.productId, orderId, type: "RELEASE", reservedDelta: -item.quantity, note } });
+     }
+     await tx.order.update({ where: { id: orderId }, data: { status: "CANCELLED", inventoryFinalizedAt: new Date() } });
+     await createCustomerNotification(tx, { userId: order.userId, type: NotificationType.ORDER, title: "سفارش لغو شد", message: note === "انقضای مهلت پرداخت" ? "مهلت ۲۴ ساعته پرداخت تمام شد و موجودی رزروشده آزاد شد." : "سفارش لغو و موجودی رزروشده آزاد شد.", href: "/account", eventKey: `order-status-${order.id}-CANCELLED` });
+     return true;
+-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
++  });
+ }
+ 
+ export async function finalizePaidOrder(orderId: string, tx: Prisma.TransactionClient) {
+   const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
+   if (!order || order.inventoryFinalizedAt || order.status !== "PENDING_PAYMENT") throw new Error("ORDER_NOT_PAYABLE");
+   for (const item of order.items) {
+-    const product = await tx.product.findUniqueOrThrow({ where: { id: item.productId }, select: { stock: true, reservedStock: true } });
+-    if (product.stock < item.quantity || product.reservedStock < item.quantity) throw new Error("INVALID_INVENTORY");
+-    await tx.product.update({ where: { id: item.productId }, data: { stock: { decrement: item.quantity }, reservedStock: { decrement: item.quantity } } });
++    const update = await tx.product.updateMany({ where: { id: item.productId, stock: { gte: item.quantity }, reservedStock: { gte: item.quantity } }, data: { stock: { decrement: item.quantity }, reservedStock: { decrement: item.quantity } } });
++    if (update.count !== 1) throw new Error("INVALID_INVENTORY");
+     await tx.inventoryMovement.create({ data: { productId: item.productId, orderId, type: "SALE", stockDelta: -item.quantity, reservedDelta: -item.quantity, note: "قطعی‌شدن فروش پس از تأیید رسید" } });
+   }
+   await tx.order.update({ where: { id: orderId }, data: { status: "PAID", expiresAt: null, inventoryFinalizedAt: new Date() } });
+diff --git a/src/lib/order-workflow.ts b/src/lib/order-workflow.ts
+new file mode 100644
+index 0000000..40f92dc
+--- /dev/null
++++ b/src/lib/order-workflow.ts
+@@ -0,0 +1,17 @@
++import { OrderStatus } from "@prisma/client";
++
++const adminTransitions: Partial<Record<OrderStatus, readonly OrderStatus[]>> = {
++  PENDING_PAYMENT: [OrderStatus.CANCELLED],
++  PAID: [OrderStatus.PROCESSING],
++  PROCESSING: [OrderStatus.SHIPPED],
++  SHIPPED: [OrderStatus.DELIVERED]
++};
++
++export function canAdminTransitionOrder(current: OrderStatus, next: OrderStatus) {
++  if (current === next) return true;
++  return adminTransitions[current]?.includes(next) ?? false;
++}
++
++export function allowedAdminOrderStatuses(current: OrderStatus) {
++  return [current, ...(adminTransitions[current] ?? [])];
++}
+diff --git a/src/lib/transaction.ts b/src/lib/transaction.ts
+new file mode 100644
+index 0000000..8df983c
+--- /dev/null
++++ b/src/lib/transaction.ts
+@@ -0,0 +1,27 @@
++import "server-only";
++
++import { Prisma } from "@prisma/client";
++import { prisma } from "@/lib/prisma";
++
++function isRetryableTransactionError(error: unknown) {
++  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
++}
++
++export async function withSerializableTransaction<T>(
++  operation: (tx: Prisma.TransactionClient) => Promise<T>,
++  maximumAttempts = 3
++) {
++  let lastError: unknown;
++  for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
++    try {
++      return await prisma.$transaction(operation, {
++        isolationLevel: Prisma.TransactionIsolationLevel.Serializable
++      });
++    } catch (error) {
++      lastError = error;
++      if (!isRetryableTransactionError(error) || attempt === maximumAttempts) throw error;
++      await new Promise((resolve) => setTimeout(resolve, attempt * 25));
++    }
++  }
++  throw lastError;
++}
+-- 
+2.51.1
+
