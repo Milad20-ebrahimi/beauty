@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { logoutAdmin } from "./logout-action";
 import { AdminNavigation } from "./admin-navigation";
+import { AdminPageGuide, AdminTopbar } from "./admin-shell-ui";
 
 export default async function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await requireAdmin();
@@ -19,7 +20,10 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
         </div>
         <a href="/" className="admin-store-link">مشاهده فروشگاه ←</a>
       </aside>
-      <div className="admin-content">{children}</div>
+      <section className="admin-workspace">
+        <AdminTopbar displayName={user.displayName || "مدیر فروشگاه"} />
+        <div className="admin-content"><AdminPageGuide />{children}</div>
+      </section>
     </div>
   );
 }

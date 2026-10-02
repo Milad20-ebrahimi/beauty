@@ -10,9 +10,15 @@ function formatPrice(price: number) {
   return new Intl.NumberFormat("fa-IR").format(price);
 }
 
-export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ success?: string }> }) {
-  const { success } = await searchParams;
+export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ success?: string; q?: string }> }) {
+  const { success, q } = await searchParams;
+  const query = q?.trim();
   const products = await prisma.product.findMany({
+    where: query ? { OR: [
+      { title: { contains: query, mode: "insensitive" } },
+      { slug: { contains: query, mode: "insensitive" } },
+      { brand: { name: { contains: query, mode: "insensitive" } } }
+    ] } : undefined,
     include: { brand: true, category: true, media: { take: 1, orderBy: { sortOrder: "asc" } }, _count: { select: { reviews: true, media: true, ingredients: true, concerns: true, skinSuitability: true } } },
     orderBy: { updatedAt: "desc" }
   });
@@ -27,7 +33,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       {success ? <div className="admin-alert success">{success === "created" ? "محصول با موفقیت ایجاد شد." : "تغییرات محصول ذخیره شد."}</div> : null}
 
       <div className="admin-table-wrap">
-        <div className="admin-table-head"><span>{products.length} محصول</span><small>مرتب‌شده براساس آخرین تغییر</small></div>
+        <div className="admin-table-head"><span>{products.length} محصول{query ? ` برای «${query}»` : ""}</span><small>{query ? <a href="/admin/products">پاک‌کردن جست‌وجو</a> : "مرتب‌شده براساس آخرین تغییر"}</small></div>
         {products.length ? (
           <div className="admin-product-list">
             {products.map((product) => {
